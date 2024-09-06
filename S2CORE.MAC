@@ -957,21 +957,21 @@ K11354:	CALL	L13100			; Get a key
 K11360:	CLR	<K01224+2>		; set filler
 K11364:	NOP3	;MOVB	#000011, <K01224+3>
 K11372:	CALL	K01224			; Clear the screen
-K11376:	MOVB	K41304, R0
+K11376:	MOVB	K41304, R0		; get input method
 K11402:	MOV	#115756, R2
 K11406:	DECB	R0
 K11410:	BEQ	K11436
 K11412:	DECB	R0
 K11414:	BEQ	K11422
 K11416:	MOV	#L15775, R2		; Redefined keys address
-K11422:	MOV	#041305, R3
+K11422:	MOV	#K41305, R3
 K11426:	MOV	#000017, R1		; Copy 15. bytes
 K11432:	MOVB	(R2)+, (R3)+		; <
 K11434:	SOB	R1, K11432		; repeat
 K11436:	MOV	#000041, R1		; 33.
 K11442:	MOV	#023034, R2
 K11446:	MOV	#023041, R3
-K11452:	PUSH	R1		; <
+K11452:	PUSH	R1			; <
 K11454:	MOV	#000005, R1		; | Copy 5 bytes
 K11460:	MOVB	(R3)+, (R2)+		; | <
 K11462:	SOB	R1, K11460		; | repeat
@@ -3606,20 +3606,21 @@ K41172:	.WORD	001000, 000000
 ;
 K41176:	NOP2	;MTPS	#000340			; disable interrupts
 K41202:	PUSH	R3
-K41204:	MOV	#041304, R3
-K41210:	MOVB	(R3)+, R0		; get input method; R3 = 041305
+K41204:	MOV	#K41304, R3
+K41210:	MOVB	(R3)+, R0		; get input method; R3 = K41305
 K41212:	DECB	R0
-K41214:	BR	K41232
+	BR	K41232
+;
 K41216:	MOVB	R0, 041340
 K41222:	POP	R3
 K41224:	NOP2	;MTPS	#000000			; enable interrupts
 K41230:	RETURN
 ; If we have a key pressed, go through key mapping table
 K41232:	PUSH	R1
-K41234:	TST	001402			; do we have an unprocessed key?
-K41240:	BEQ	K41276			; no => jump
-K41242:	CLR	001402			; mark as processed
-K41246:	MOV	001406, R0		; get the key
+	TSTB	@#177660	;БК	; do we have an unprocessed key?
+	BPL	K41276		;БК	; no => jump
+	NOP2	;CLR	001402			; mark as processed
+	MOVB	@#177662, R0	;БК	; get the key
 K41252:	MOV	#000011, R1		; 9.
 K41256:	CMPB	(R3)+, R0		; <  matches the key?
 K41260:	BNE	K41270			; |  no => jump
