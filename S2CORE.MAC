@@ -21,30 +21,32 @@
 	NOP
 .ENDM
 
-; Режимы для регистра управления памятью
-;          .___1___...00.00	Стр.	Назначение
-MMODE0 = ^B0001110000000000	; 5:4  -  системный
-MMODE4 = ^B0011110000000000	; 3:4  -  для загрузки
-MMODE1 = ^B0011100000000000	; 3:1  -  основной
-MMODE5 = ^B0001100000000000	; 5:1  -  для рисования на экране at 040000-077777 window
+; п═п╣п╤п╦п╪я▀ п╢п╩я▐ я─п╣пЁп╦я│я┌я─п╟ я┐п©я─п╟п╡п╩п╣п╫п╦я▐ п©п╟п╪я▐я┌я▄я▌
+;          .___1___...00.00	п║я┌я─.	п²п╟п╥п╫п╟я┤п╣п╫п╦п╣
+MMODE0 = ^B0001110000000000	; 5:4  -  я│п╦я│я┌п╣п╪п╫я▀п╧
+MMODE4 = ^B0011110000000000	; 3:4  -  п╢п╩я▐ п╥п╟пЁя─я┐п╥п╨п╦
+MMODE1 = ^B0011100000000000	; 3:1  -  п╬я│п╫п╬п╡п╫п╬п╧
+MMODE5 = ^B0001100000000000	; 5:1  -  п╢п╩я▐ я─п╦я│п╬п╡п╟п╫п╦я▐ п╫п╟ я█п╨я─п╟п╫п╣ at 040000-077777 window
 
 	.=001310
 
 K01000:	MTPS	#000340			; Disable interrupts
-;	MOV	SP, OSTACK		; Сохраняем начальное значение SP
+;	MOV	SP, OSTACK		; п║п╬я┘я─п╟п╫я▐п╣п╪ п╫п╟я┤п╟п╩я▄п╫п╬п╣ п╥п╫п╟я┤п╣п╫п╦п╣ SP
 	MOV	#1000, SP
-;	MOV	#1330, @#177664		; Устанавливаем стандартное значение скролла
-;	MOV	#MMODE1, @#177716	; Включаем основной режим памяти
+;	MOV	#1330, @#177664		; пёя│я┌п╟п╫п╟п╡п╩п╦п╡п╟п╣п╪ я│я┌п╟п╫п╢п╟я─я┌п╫п╬п╣ п╥п╫п╟я┤п╣п╫п╦п╣ я│п╨я─п╬п╩п╩п╟
+;	MOV	#MMODE1, @#177716	; п▓п╨п╩я▌я┤п╟п╣п╪ п╬я│п╫п╬п╡п╫п╬п╧ я─п╣п╤п╦п╪ п©п╟п╪я▐я┌п╦
 ;K01206:	MOV	#004000, <K01224+2>	; set filler
 K01214:	CALL	K01224			; Clear the screen
 	CALL	PREPAR
 K01220:	JMP	K06660
+
+	.BLKW	20	;NOTE: п║п╡п╬п╠п╬п╢п╫п╬п╣ п╪п╣я│я┌п╬
 ;
 ; Clear 1024.*8.*2. = 16K bytes on the screen
 K01224:	MOV	#000000, R0		; Filler value  WARN: mutable argument
 	MOV	#002000, R1		; 1024.
 	MOV	#040000, R5		; Screen start address
-	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
+	MOV	#MMODE5, @#177716	; п▓п╨п╩я▌я┤п╟п╣п╪ я─п╣п╤п╦п╪ п©п╟п╪я▐я┌п╦ 5
 K01254:	MOV	R0, (R5)+		; <  #0
 	MOV	R0, (R5)+		; |  #1
 	MOV	R0, (R5)+		; |  #2
@@ -54,18 +56,15 @@ K01254:	MOV	R0, (R5)+		; <  #0
 	MOV	R0, (R5)+		; |  #6
 	MOV	R0, (R5)+		; |  #7
 	SOB	R1, K01254		; repeat
-	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
+	MOV	#MMODE1, @#177716	; п▓п╨п╩я▌я┤п╟п╣п╪ я─п╣п╤п╦п╪ п©п╟п╪я▐я┌п╦ 1
 	RETURN
 ;
 ; Procedure: Something with timer ??
-K01314:
-;NOTE: Пока убрал для БК
-	RETURN
-
-	.BLKW	20	;NOTE: Свободное место
+;NOTE: п÷п╬п╨п╟ я┐п╠я─п╟п╩ п╢п╩я▐ п▒п 
+K01314:	RETURN
 ;
 ; Interrupt 130 handler
-;NOTE: Убрал для БК
+;NOTE: пёп╠я─п╟п╩ п╢п╩я▐ п▒п 
 
 ; Procedure: ??
 K01434:	PUSH	R4
@@ -80,7 +79,7 @@ K01456:	MOV	(R4)+, R1
 K01460:	MOV	(R4)+, R2
 K01462:	MOV	(R4), R3
 K01464:	POP	R4
-K01466:	RETURN
+	RETURN
 K01470:	ADD	#000014, R4
 K01474:	MOV	R3, (R4)
 K01476:	MOV	R2, -(R4)
@@ -89,7 +88,7 @@ K01502:	MOV	-(R4), R3
 K01504:	MOV	-(R4), R2
 K01506:	MOV	-(R4), R1
 K01510:	CLR	-(R4)
-K01512:	BR	K01464
+	BR	K01464
 ;
 K01514:	PUSH	R4
 K01516:	MOV	#001572, R4
@@ -99,7 +98,7 @@ K01526:	MOV	SP, (R4)+
 K01530:	MOV	R0, (R4)+
 K01532:	MOV	(R4), R0
 K01534:	POP	R4
-K01536:	RETURN
+	RETURN
 K01540:	CLR	(R4)+
 K01542:	TST	(R4)+
 K01544:	MOV	R0, (R4)
@@ -117,16 +116,16 @@ K01612:	PUSH	R5
 K01614:	MOV	#040001, R3		; screen address
 K01620:	MOV	#000022, R1		; 18. rows
 K01624:	MOV	#177777, R2
-K01630:	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
-K01644:	MOV	#000040, R5		; 32.
-K01650:	MOVB	R2, (R3)+		; <
-K01652:	INC	R3			; |
-K01654:	SOB	R5, K01650		; repeat
-K01656:	NOP2	;ADD	#000020, R3
-K01662:	SOB	R1, K01644
-K01664:	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
-K01700:	POP	R5
-K01702:	RETURN
+K01630:	MOV	#MMODE5, @#177716	; п▓п╨п╩я▌я┤п╟п╣п╪ я─п╣п╤п╦п╪ п©п╟п╪я▐я┌п╦ 5
+K01644:	MOV	#000040, R5		; < 32.
+K01650:	MOVB	R2, (R3)+		; | <
+K01652:	INC	R3			; | |
+K01654:	SOB	R5, K01650		; | repeat
+	NOP2	;ADD	#000020, R3
+	SOB	R1, K01644		; repeat
+	MOV	#MMODE1, @#177716	; п▓п╨п╩я▌я┤п╟п╣п╪ я─п╣п╤п╦п╪ п©п╟п╪я▐я┌п╦ 1
+	POP	R5
+	RETURN
 ;
 ; Procedure: Print string; R3 = string address, R1 = length, R2 = screen coords
 K01704:	PUSH	R2
@@ -140,7 +139,7 @@ K01726:	ASL	R0
 K01730:	ASL	R0			; *8
 K01732:	ADD	#<L06234-256.>, R0	; + font base address minus 256. for 32. symbols
 K01736:	PUSH	R2
-K01740:	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
+K01740:	MOV	#MMODE5, @#177716	; п▓п╨п╩я▌я┤п╟п╣п╪ я─п╣п╤п╦п╪ п©п╟п╪я▐я┌п╦ 5
 	PUSH	R1
 K01754:	MOVB	#000010, R5		; 8. lines
 K01760:	MOVB	(R0)+, R1		; <
@@ -149,7 +148,7 @@ K01760:	MOVB	(R0)+, R1		; <
 K01762:	ADD	#000100, R2		; |  next line
 K01766:	SOB	R5, K01760		; repeat
 	POP	R1
-K01770:	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
+K01770:	MOV	#MMODE1, @#177716	; п▓п╨п╩я▌я┤п╟п╣п╪ я─п╣п╤п╦п╪ п©п╟п╪я▐я┌п╦ 1
 K02004:	POP	R2
 K02006:	ADD	#000001, R4
 K02012:	CMPB	#000040, 002010
@@ -225,7 +224,7 @@ K02322:	MOVB	(R3), R0
 	ASL	R3
 	ASL	R3
 	ASL	R3			; *8.
-K02344:	ADD	R0, R3
+	ADD	R0, R3			; *9.
 K02346:	ADD	#077531, R3		; ??? some base address
 K02352:	MOV	#K04662, R2
 K02356:	MOVB	(R3)+, (R2)+
@@ -258,7 +257,7 @@ K02466:	ASL	R3
 K02470:	ASL	R3
 K02472:	ASL	R3			; *8
 K02474:	ADD	#K73546, R3		; tiles base address
-K02500:	MOV	#K04662, R2
+K02500:	MOV	#K04662, R2		; buffer address
 K02504:	CALL	K36042
 K02510:	MOVB	(R3), R1
 K02512:	MOVB	007126(R1), R0
@@ -424,7 +423,7 @@ K03374:	MOVB	@K04652, R0		; get tile from Ninja tile screen
 K03400:	BISB	R0, R3
 K03402:	INCB	R0
 K03404:	BNE	K03412
-K03406:	JMP	K04104
+	JMP	K04104
 K03412:	CMPB	R0, #000341
 K03416:	BHIS	K03462
 K03420:	CMPB	R0, #000323
@@ -535,6 +534,7 @@ K04072:	MOVB	R0, (R2)
 K04074:	MOVB	(R3)+, R0
 K04076:	CALL	K04634			; if K36264 != 0 then mirror byte R0
 K04102:	BISB	R0, (R2)+
+;
 K04104:	MOV	#K04672, R3
 K04110:	MOV	#000020, R0
 K04114:	NOP				; "NOP" command or "MOVB R0,(R3)" command
@@ -585,14 +585,14 @@ K04222:	BISB	(R3)+, (R2)+
 	COMB	R0
 	BICB	R0, (R2)
 	BISB	(R3)+, (R2)+
-	CMPB	(R3), #000377
+	CMPB	(R3), #377
 	BEQ	K04274
 	MOVB	(R3), (R2)
 ; Copy pixels from K04662 to screen; R5 = address on screen
 K04274:	MOV	#K04662, R3
 	PUSH	R5
 	MOV	#100, R1		; offset to next line
-	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
+	MOV	#MMODE5, @#177716	; п▓п╨п╩я▌я┤п╟п╣п╪ я─п╣п╤п╦п╪ п©п╟п╪я▐я┌п╦ 5
 	MOVB	(R3)+, R0		; #0
 	ASL	R0
 	MOV	PXCONH(R0), (R5)
@@ -609,8 +609,8 @@ K04274:	MOV	#K04662, R3
 	ASL	R0
 	MOV	PXCONH(R0), (R5)
 	ADD	R1, R5
-	;TODO: Вместо пустой строки объединять по OR со следующим байтом
-	CLR	(R5)			; Пустая строка в середине тайла
+	;TODO: п п╬п©п╦я─п╬п╡п╟я┌я▄ п╦ я█я┌п╬я┌ п╠п╟п╧я┌ я┌п╬п╤п╣
+	CLR	(R5)			; п÷я┐я│я┌п╟я▐ я│я┌я─п╬п╨п╟ п╡ я│п╣я─п╣п╢п╦п╫п╣ я┌п╟п╧п╩п╟
 	ADD	R1, R5
 	MOVB	(R3)+, R0		; #4
 	ASL	R0
@@ -627,7 +627,7 @@ K04274:	MOV	#K04662, R3
 	MOVB	(R3)+, R0		; #7
 	ASL	R0
 	MOV	PXCONH(R0), (R5)
-	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
+	MOV	#MMODE1, @#177716	; п▓п╨п╩я▌я┤п╟п╣п╪ я─п╣п╤п╦п╪ п©п╟п╪я▐я┌п╦ 1
 	MOVB	(R3), R0		; get attr
 	POP	R5
 K04440:	TST	(R5)+			; next column
@@ -646,7 +646,7 @@ K04440:	TST	(R5)+			; next column
 	JMP	K02304
 K04506:	ADD	#001100, R5
 	DEC	<K02272+4>
-	BEQ	K04632		; Переход на RETURN
+	BEQ	K04632		; п÷п╣я─п╣я┘п╬п╢ п╫п╟ RETURN
 	JMP	K02300
 K04526:	ADD	#112754, R3		; ??? some base address
 	CMPB	R0, #000345
@@ -662,25 +662,25 @@ K04544:	MOV	#K04662, R2
 	MOVB	(R3)+, (R2)+
 	MOVB	(R3)+, (R2)+
 	MOVB	(R3)+, (R2)+
-	;MOVB	#060, (R2)		;NOTE: Атрибут, не нужно на БК
+	;MOVB	#060, (R2)		;NOTE: п░я┌я─п╦п╠я┐я┌, п╫п╣ п╫я┐п╤п╫п╬ п╫п╟ п▒п 
 	BR	K04274
 ;
 ; Procedure: ?? Draw string as tiles; R2 = string, R1 = length
 K04604:	MOV	R1, R5
 K04606:	MOVB	(R2)+, R0		; <
-K04610:	ADD	#000244, R0
-K04614:	MOVB	R0, (R3)+
-K04616:	SOB	R1, K04606		; repeat
-K04620:	SUB	#002200, R3
+	ADD	#000244, R0
+	MOVB	R0, (R3)+
+	SOB	R1, K04606		; repeat
+	SUB	#002200, R3
 K04624:	MOVB	#000001, -(R3)		; <
-K04630:	SOB	R5, K04624		; repeat
+	SOB	R5, K04624		; repeat
 K04632:	RETURN
 ;
 ; Procedure: ?? if K36264 != 0 then mirror byte R0
 K04634:	TSTB	K36264
-K04640:	BEQ	K04650			; = 0 ? => don't mirroring
-K04642:	MOVB	R0, R1
-K04644:	MOVB	L23024(R1), R0		; byte mirroring
+	BEQ	K04650			; = 0 ? => don't mirroring
+	MOVB	R0, R1
+	MOVB	L23024(R1), R0		; byte mirroring
 K04650:	RETURN
 ;
 K04652:	.WORD	0			; Address in Ninja tile screen
@@ -701,13 +701,13 @@ K04706:	TSTB	(R3)
 K04710:	BEQ	K05032
 K04712:	DECB	(R3)
 K04714:	MOV	023746, R3
-K04720:	MOV	#000005, R1
-K04724:	BICB	#177600, (R3)+
-K04730:	SOB	R1, K04724
-K04732:	MOV	#073477, R3
-K04736:	MOV	#000010, R1
-K04742:	MOV	#000017, R0
-K04746:	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
+K04720:	MOV	#000005, R1		; 5.
+K04724:	BICB	#177600, (R3)+		; <
+K04730:	SOB	R1, K04724		; repeat
+	MOV	#073477, R3		; screen address
+	MOV	#000010, R1
+	MOV	#000017, R0
+	MOV	#MMODE5, @#177716	; п▓п╨п╩я▌я┤п╟п╣п╪ я─п╣п╤п╦п╪ п©п╟п╪я▐я┌п╦ 5
 	NOP3
 K04762:	MOVB	R0, (R3)+
 K04764:	INC	R3
@@ -719,7 +719,7 @@ K04776:	MOVB	R0, (R3)+
 K05000:	INC	R3
 K05002:	ADD	#000070, R3
 K05006:	SOB	R1, K04762
-K05010:	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
+K05010:	MOV	#MMODE1, @#177716	; п▓п╨п╩я▌я┤п╟п╣п╪ я─п╣п╤п╦п╪ п©п╟п╪я▐я┌п╦ 1
 	NOP3
 K05024:	CALL	110300
 K05030:	CLR	R0
@@ -740,7 +740,7 @@ K05074:	MOV	#067602, R3
 K05100:	ADD	#000000, R3		;WARN: mutable argument
 K05104:	PUSH	R3
 K05106:	MOV	#000030, R1
-	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
+	MOV	#MMODE5, @#177716	; п▓п╨п╩я▌я┤п╟п╣п╪ я─п╣п╤п╦п╪ п©п╟п╪я▐я┌п╦ 5
 K05126:	MOVB	(R2)+, R5		; <
 	ASL	R5			; |
 	MOV	PXCONH(R5), (R3)+	; | copy pixels
@@ -773,7 +773,7 @@ K05170:	;MOV	R2, R4			;   <
 	;SOB	R1, K05170		;   repeat
 	;ADD	#000004, R2
 	;SOB	R5, K05164		; repeat
-	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
+	MOV	#MMODE1, @#177716	; п▓п╨п╩я▌я┤п╟п╣п╪ я─п╣п╤п╦п╪ п©п╟п╪я▐я┌п╦ 1
 	POP	R2
 	POP	R1
 	POP	R3
@@ -946,7 +946,7 @@ K11310:	CALL	K01704			; Print string "GOOD LUCK ON YOUR MISSION"
 K11314:	MOV	#050110, R2
 K11320:	MOV	#000020, R1		; 16.
 K11324:	CALL	K01704			; Print string "PREPARE TO BEGIN"
-;NOTE: Временно закомментировал, из-за нехватки слов в K11632 TODO
+;NOTE: п▓я─п╣п╪п╣п╫п╫п╬ п╥п╟п╨п╬п╪п╪п╣п╫я┌п╦я─п╬п╡п╟п╩, п╦п╥-п╥п╟ п╫п╣я┘п╡п╟я┌п╨п╦ я│п╩п╬п╡ п╡ K11632 TODO
 ;K11330:	MOV	#K07336, R3		; "PRESS ANY KEY TO CONTINUE"
 ;K11334:	MOV	#050343, R2
 ;K11340:	MOV	#000031, R1		; 25.
@@ -989,7 +989,7 @@ K11520:	CMPB	#177777, R3		; |  end of sequence?
 K11524:	BNE	K11534
 K11526:	POP	R4
 K11530:	JMP	K12454			; Indicator panel frame is shown - exit the loop
-K11534:	BIC	#177400, R3
+K11534:	BIC	#177400, R3		; keep low byte
 K11540:	PUSH	R3
 K11542:	ASL	R3			; | *2
 K11544:	ASL	R3			; | *4
@@ -1015,7 +1015,7 @@ K11630:	BR	K11516			; repeat
 ; Procedure: Show one tile of the indicator panel
 K11632:	PUSH	R2
 	PUSH	R5
-	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
+	MOV	#MMODE5, @#177716	; п▓п╨п╩я▌я┤п╟п╣п╪ я─п╣п╤п╦п╪ п©п╟п╪я▐я┌п╦ 5
 	MOVB	(R3)+, R5		; #0
 	ASL	R5
 	MOV	PXCONH(R5), (R2)
@@ -1047,7 +1047,7 @@ K11632:	PUSH	R2
 	MOVB	(R3)+, R5		; #7
 	ASL	R5
 	MOV	PXCONH(R5), (R2)
-	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
+	MOV	#MMODE1, @#177716	; п▓п╨п╩я▌я┤п╟п╣п╪ я─п╣п╤п╦п╪ п©п╟п╪я▐я┌п╦ 1
 	POP	R5
 	POP	R2
 K11766:	RETURN
@@ -1104,13 +1104,13 @@ K12514:	MOVB	#060, (R3)+		; <
 K12520:	SOB	R1, K12514		; repeat
 K12522:	MOV	#K12405, R3		; "HELD" etc.
 K12526:	MOV	#050301, R2
-K12532:	MOV	#000004, R1
+K12532:	MOV	#000004, R1		; 4.
 K12536:	CALL	K01704			; Print string "HELD"
 K12542:	MOV	#050325, R2
-K12546:	MOV	#000005, R1
+K12546:	MOV	#000005, R1		; 5.
 K12552:	CALL	K01704			; Print string "TIMER"
 K12556:	MOV	#050333, R2
-K12562:	MOV	#000004, R1
+K12562:	MOV	#000004, R1		; 4.
 K12566:	CALL	K01704			; Print string "NEAR"
 K12572:	MOV	#050146, R2
 K12576:	MOV	#000016, R1		; 14.
@@ -1122,19 +1122,19 @@ K12630:	MOVB	#000006, K36212
 K12636:	MOVB	#000001, 036213
 K12644:	MOVB	#000021, 036215
 K12652:	MOV	#050205, K51142
-K12660:	CLR	R0
-K12662:	MOVB	R0, 024762
-K12666:	MOVB	R0, 051145
-K12672:	MOVB	R0, 051146
-K12676:	MOVB	R0, 017716
-K12702:	MOVB	R0, K36216
-K12706:	MOVB	R0, 003542
-K12712:	MOVB	R0, K33540
-K12716:	MOVB	R0, K36214		; clear room number
-K12722:	MOV	#023034, 023746
-K12730:	MOV	#046310, 036300
-K12736:	MOV	#K40520, <K25272+2>	; set JMP address
-K12744:	MOVB	R0, 037662
+	CLR	R0
+K12662:	CLRB	024762
+K12666:	CLRB	051145
+K12672:	CLRB	051146
+K12676:	CLRB	017716
+K12702:	CLRB	K36216
+K12706:	CLRB	003542
+	CLRB	K33540
+	CLRB	K36214			; clear room number
+	MOV	#023034, 023746
+	MOV	#046310, 036300
+	MOV	#K40520, <K25272+2>	; set JMP address
+	MOVB	R0, 037662
 K12750:	MOVB	R0, K36264
 K12754:	MOV	#000240, K04114		; set NOP command
 K12762:	MOV	#070613, 013334
@@ -1146,7 +1146,7 @@ K13006:	MOVB	R0, K33465		; set NEAR value = 1
 K13012:	MOVB	R0, K33542
 K13016:	MOVB	R0, K36207		; set TIMER counter value = 1
 K13022:	MOV	#033556, R3
-K13026:	MOV	#000014, R2
+K13026:	MOV	#000014, R2		; 12.
 K13032:	MOV	#000145, R1		; 101.
 K13036:	MOVB	(R3), R0		; <
 K13040:	CMPB	R0, #000005
@@ -1187,19 +1187,19 @@ K13222:	BNE	K13230
 K13224:	MOVB	#000001, R0
 K13230:	MOVB	R0, 070340
 K13234:	CLRB	K17635
-K13240:	CALL	K46120
-K13244:	CALL	K46150
+K13240:	CALL	K46120			; Fill Ninja tile screen
+K13244:	CALL	K46150			; Fill Enemy 0/1 tile screens
 K13250:	MOV	#L25424, R3		; Back tile screen address
-K13254:	MOV	#000440, R1
+K13254:	MOV	#000440, R1		; 288. words
 K13260:	CLR	(R3)+			; <
 K13262:	SOB	R1, K13260		; repeat
-K13264:	MOV	#000440, R1
-K13270:	MOV	#177777, R5
+K13264:	MOV	#000440, R1		; 288. words
+K13270:	MOV	#177777, R5		; filler
 K13274:	MOV	R5, (R3)+		; <
 K13276:	SOB	R1, K13274		; repeat
 K13300:	MOV	#L24324, R3
 K13304:	MOV	#000440, R1		; 288. words
-K13310:	MOV	#000401, R5
+K13310:	MOV	#000401, R5		; filler
 K13314:	MOV	R5, (R3)+		; <
 K13316:	SOB	R1, K13314		; repeat
 ;
@@ -1229,7 +1229,7 @@ K13410:	JMP	@000000(R0)		; Process this marker
 K13414:	POP	R3
 K13416:	INC	R3
 K13420:	BR	K13360
-K13422:	JMP	@#013414		;
+K13422:	JMP	@#K13414		;
 K13426:	.WORD	K20120			; $00 000 - Fill horizontally W with tile
 	.WORD	K20152			; $01 001 - Fill vertically H with tile
 	.WORD	K24104			; $02 002 - Fill rectangle WxH with tile
@@ -1621,7 +1621,7 @@ K16270:	POP	R3
 K16272:	ADD	#000040, R3
 K16276:	POP	R2
 K16300:	SOB	R1, K16260		; repeat
-K16302:	JMP	K13422
+	JMP	K13422
 ;
 K16306:	.BYTE	026,027,030,031,032,033,034,035,036
 ;
@@ -2104,7 +2104,7 @@ K24746:
 	.BYTE	041, 255, 000, 012, 157, 157, 157, 157
 	.BYTE	322, 323, 323, 325, 000, 000
 ;
-K24764:	CALL	K46120
+K24764:	CALL	K46120			; Fill Ninja tile screen
 K24770:	MOV	#L24324, R3
 K24774:	MOV	#000220, R1
 K25000:	CLR	(R3)+			; <
@@ -2156,19 +2156,19 @@ K25226:	CALL	L10236
 K25232:	CLR	R1
 K25234:	CMPB	050156, #000144
 K25242:	BNE	K25250
-K25244:	MOVB	@023746, R1
+K25244:	MOVB	@023746, R1		; get new NEAR value
 K25250:	MOV	R1, R0
 K25252:	MOV	#K33465, R3		; NEAR value address
 K25256:	MOVB	(R3), R5		; get NEAR value
 K25260:	MOVB	R0, (R3)		; set new NEAR value
 K25262:	CMPB	R0, R5			; compare old/new NEAR values
-K25264:	BEQ	K25272			; same, no need to update => jump
-K25266:	CALL	K04674			; Update NEAR indicator
+	BEQ	K25272			; same, no need to update => jump
+	CALL	K04674			; Update NEAR indicator
 K25272:	JMP	@#000000		;WARN: mutable argument
 ;
 K25276:	CALL	K36266
 K25302:	CALL	K36220
-K25306:	CALL	K46150
+K25306:	CALL	K46150			; Fill Enemy 0/1 tile screens
 K25312:	MOVB	036211, R0
 K25316:	ADD	#000007, R0
 K25322:	CMPB	R0, #000010
@@ -3585,12 +3585,12 @@ K41060:	CMPB	050164, #000376
 K41066:	BEQ	K41074
 K41070:	MOV	#000012, R5
 ; Sound
-K41074:	BIC	#000200, @#157706	; < sound timer
-K41102:	BIS	#000140, @#157706	;   sound
+K41074:	NOP3	;BIC	#000200, @#157706	; < sound timer
+K41102:	NOP3	;BIS	#000140, @#157706	;   sound
 K41110:	NOP3	;MOV	@#157706, @#177604	;   set SysRegC MS0515
 K41116:	CLR	R0
-K41120:	BIS	#000200, @#157706	;   sound timer
-K41126:	BIC	#000140, @#157706	;   sound
+K41120:	NOP3	;BIS	#000200, @#157706	;   sound timer
+K41126:	NOP3	;BIC	#000140, @#157706	;   sound
 K41134:	NOP3	;MOV	@#157706, @#177604	;   set SysRegC MS0515
 K41142:	SOB	R5, K41074		; repeat
 ;
@@ -3655,21 +3655,21 @@ K41340:	.BYTE	0
 ;K43310:
 .INCLUDE /S246C8.MAC/
 ;
-; Procedure: ??
+; Procedure: Fill Ninja tile screen
 K46120:	MOV	#L27624, R3		; Ninja tile screen address
-K46124:	MOV	#000110, R1
-K46130:	MOV	#177777, R5
-K46134:	MOV	R5, (R3)+
-K46136:	MOV	R5, (R3)+
-K46140:	MOV	R5, (R3)+
-K46142:	MOV	R5, (R3)+
-K46144:	SOB	R1, K46134
+K46124:	MOV	#000110, R1		; 72. * 4 = 288. words
+K46130:	MOV	#177777, R5		; filler
+K46134:	MOV	R5, (R3)+		; <
+	MOV	R5, (R3)+
+	MOV	R5, (R3)+
+	MOV	R5, (R3)+
+K46144:	SOB	R1, K46134		; repeat
 K46146:	RETURN
 ;
-; Procedure: ??
+; Procedure: Fill Enemy 0/1 tile screens
 K46150:	MOV	#L30724, R3		; Enemy 0 tile screen address
-K46154:	MOV	#000220, R1
-K46160:	BR	K46130
+K46154:	MOV	#000220, R1		; 144.
+K46160:	BR	K46130			; fill Enemy 0/1 tile screens
 ;
 ;K46162:
 .INCLUDE /S24C72.MAC/
@@ -3885,10 +3885,10 @@ K51200:	BISB	R1, R0
 K51202:	MOVB	R0, (R3)
 K51204:	TSTB	R1
 K51206:	BEQ	K51216
-K51210:	MOVB	#000001, 024762
+K51210:	MOVB	#001, 024762
 K51216:	MOVB	023750, R0
 K51222:	BPL	K51300
-K51224:	BIC	#177600, R0
+K51224:	BIC	#177600, R0		; 0..177
 K51230:	PUSH	R0
 K51232:	MOV	#055333, R2		; screen coords
 K51236:	MOVB	#000004, R1		; 4. rows
@@ -4018,10 +4018,10 @@ K52064:	CMPB	114536, #000001
 K52072:	BNE	K52076
 K52074:	RETURN
 K52076:	CALL	L14442
-K52102:	MOV	#000001, R1
-K52106:	CALL	L14502
-K52112:	CALL	L14442
-K52116:	RETURN
+	MOV	#000001, R1
+	CALL	L14502
+	JMP	L14442
+	NOP1
 K52120:	CALL	K52036
 K52124:	CALL	K50274
 K52130:	BNE	K52162
@@ -4341,13 +4341,13 @@ K54306:	CALL	K50274
 K54312:	BEQ	K54530
 K54314:	TSTB	K33540
 K54320:	BEQ	K54510
-K54322:	MOV	#000024, R1
-K54326:	MOV	#K54440, R2		; "MISSION TERMINATED"
+K54322:	MOV	#000024, R1		; 20.
+K54326:	MOV	#K54440, R2		; " MISSION TERMINATED "
 K54332:	MOVB	K33540, R0
 K54336:	DECB	R0
-K54340:	BNE	K54346
+	BNE	K54346
 ; Dead
-K54342:	MOV	#K54464, R2		; "MISSION FAILURE"
+K54342:	MOV	#K54464, R2		; "  MISSION FAILURE  "
 K54346:	MOV	#127132, R3		; address
 K54352:	CALL	K04604			; Draw string as tiles
 K54356:	MOVB	017200, R0
@@ -4368,7 +4368,7 @@ K54440:	.ASCII	/@MISSION@TERMINATED@/
 K54464:	.ASCII	/@@MISSION@@FAILURE@@/
 ;
 K54510:	MOV	#000001, R1
-K54514:	CALL	L14472
+	CALL	L14472
 K54520:	CALL	L15650			; Sound
 K54524:	JMP	K50744
 K54530:	MOV	#054512, R3
@@ -4619,7 +4619,7 @@ L07706:	BR	L07666
 L07710:	PUSH	R4
 L07712:	MOV	#040052, R3
 L07716:	MOV	#L24324, R2		; Address with prepared picture
-L07722:	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
+L07722:	MOV	#MMODE5, @#177716	; п▓п╨п╩я▌я┤п╟п╣п╪ я─п╣п╤п╦п╪ п©п╟п╪я▐я┌п╦ 5
 	NOP3
 L07736:	MOV	#000013, R1
 L07742:	MOV	#000030, R4		; <
@@ -4665,16 +4665,16 @@ L10044:	MOV	#130424, R2
 L10050:	MOV	#000030, R1
 L10054:	MOV	#000040, R4		; <
 L10060:	NOP1	;PUSH	R3			; | <
-L10062:	;NOTE: Удалил
+L10062:	;NOTE: пёп╢п╟п╩п╦п╩
 L10136:	NOP1	;POP	R3
-L10140:	;NOTE: Удалил
+L10140:	;NOTE: пёп╢п╟п╩п╦п╩
 L10144:	NOP1	;SOB	R4, L10060		;   repeat
 L10146:	NOP2	;ADD	#001100, R3
 L10152:	NOP1	;SOB	R1, L10054		; repeat
-L10154:	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
+L10154:	MOV	#MMODE1, @#177716	; п▓п╨п╩я▌я┤п╟п╣п╪ я─п╣п╤п╦п╪ п©п╟п╪я▐я┌п╦ 1
 	POP	R4
-	CALL	L10320			; Clear Menu left part
-	RETURN
+	JMP	L10320			; Clear Menu left part, and return
+	NOP1
 	NOP3
 ;
 ; Procedure: ??
@@ -4724,29 +4724,29 @@ L10364:	SUB	#000400, R2		; |
 L10370:	ADD	#004000, R2		; |
 L10374:	SOB	R4, L10332		; repeat
 ; Clear atributes
-;NOTE удалил, не нужно на БК
+;NOTE я┐п╢п╟п╩п╦п╩, п╫п╣ п╫я┐п╤п╫п╬ п╫п╟ п▒п 
 L10554:	POP	R4
 L10556:	RETURN
 
-;TODO: Поместить в буферную память, используется один раз на старте
+;TODO: п÷п╬п╪п╣я│я┌п╦я┌я▄ п╡ п╠я┐я└п╣я─п╫я┐я▌ п©п╟п╪я▐я┌я▄, п╦я│п©п╬п╩я▄п╥я┐п╣я┌я│я▐ п╬п╢п╦п╫ я─п╟п╥ п╫п╟ я│я┌п╟я─я┌п╣
 PREPAR:
-; Создать таблицу PXCONV, для конвертации пикселей
+; п║п╬п╥п╢п╟я┌я▄ я┌п╟п╠п╩п╦я├я┐ PXCONV, п╢п╩я▐ п╨п╬п╫п╡п╣я─я┌п╟я├п╦п╦ п©п╦п╨я│п╣п╩п╣п╧
 	MOV	#L33124, R2
-	MOV	#-128., R3		; R3 бежит от -128. до +127.
-1$:	CLR	R5			; в R5 будет готовое слово
-	MOV	#8., R4			; в R4 счётчик по разрядам
+	MOV	#-128., R3		; R3 п╠п╣п╤п╦я┌ п╬я┌ -128. п╢п╬ +127.
+1$:	CLR	R5			; п╡ R5 п╠я┐п╢п╣я┌ пЁп╬я┌п╬п╡п╬п╣ я│п╩п╬п╡п╬
+	MOV	#8., R4			; п╡ R4 я│я┤я▒я┌я┤п╦п╨ п©п╬ я─п╟п╥я─я▐п╢п╟п╪
 	MOV	R3, R1
-2$:	ASR	R1			; 0-й бит идёт в C
-	ROL	R5			; забираем из C
+2$:	ASR	R1			; 0-п╧ п╠п╦я┌ п╦п╢я▒я┌ п╡ C
+	ROL	R5			; п╥п╟п╠п╦я─п╟п╣п╪ п╦п╥ C
 	ROL	R5
 	SOB	R4, 2$
-	MOV	R5, (R2)+		; записываем результат
+	MOV	R5, (R2)+		; п╥п╟п©п╦я│я▀п╡п╟п╣п╪ я─п╣п╥я┐п╩я▄я┌п╟я┌
 	INC	R3
 	CMP	R3, #128.
 	BLT	1$
 	RETURN
 
-	.BLKW	45	;NOTE: Свободное место
+	.BLKW	45	;NOTE: п║п╡п╬п╠п╬п╢п╫п╬п╣ п╪п╣я│я┌п╬
 
 L10560:	.ASCIZ	/                     /	; 21. space char
 ;
@@ -5060,8 +5060,8 @@ L13002:	BR	L12630
 L13004:	POP	R1
 L13006:	MOV	001606, R2		; screen coords
 L13012:	MOV	#000016, R0
-L13016:	CALL	L13224			; calc screen attr address and set attrs for 8x8 block
-L13022:	RETURN
+	JMP	L13224			; calc screen attr address and set attrs for 8x8 block
+	NOP1
 ;
 ; Procedure: Empty keyboard buffer
 L13024:	CALL	L13036			; Read a key
@@ -5133,7 +5133,7 @@ L13304:	ADD	#040001, R2		; screen attr address
 L13310:	RETURN
 ;
 ; Procedure: Set attributes for 8x8 block; R0 = attribute, R2 = screen address
-L13312:	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
+L13312:	MOV	#MMODE5, @#177716	; п▓п╨п╩я▌я┤п╟п╣п╪ я─п╣п╤п╦п╪ п©п╟п╪я▐я┌п╦ 5
 	NOP3
 L13326:	MOVB	R0, (R2)		; #0
 L13330:	ADD	#000100, R2
@@ -5151,7 +5151,7 @@ L13372:	MOVB	R0, (R2)		; #6
 L13374:	ADD	#000100, R2
 L13400:	MOVB	R0, (R2)		; #7
 L13402:	ADD	#000100, R2
-L13406:	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
+L13406:	MOV	#MMODE1, @#177716	; п▓п╨п╩я▌я┤п╟п╣п╪ я─п╣п╤п╦п╪ п©п╟п╪я▐я┌п╦ 1
 	NOP3
 L13422:	RETURN
 ; Procedure: Clear Menu selection
@@ -5237,33 +5237,34 @@ L14462:	MOV	#114510, R3
 L14466:	INCB	(R3)
 L14470:	RETURN
 ;
-; Procedure: ??
+; Procedure: Change energy value/indicator ??, R1 = ??
 L14472:	MOV	#000001, R0
 L14476:	BNE	L14502
 L14500:	RETURN
 L14502:	PUSH	R1
 L14504:	PUSH	R5
-L14506:	MOV	#000000, R2
+L14506:	MOV	#000000, R2		;WARN: mutable argument
 L14512:	ADD	#050245, R2		; screen coords
 L14516:	PUSH	R4
 L14520:	CALL	K02056			; screen coords R2 to screen address
 L14524:	POP	R4
 L14526:	MOV	#001200, R3
-L14532:	ADD	R2, R3
-L14534:	MOV	#000000, R5
-L14540:	MOV	#000010, R1		; 8.
-L14544:	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
-	NOP3
-L14560:	MOVB	(R3), R0		; <
-L14562:	XOR	R5, R0
-L14564:	MOVB	R0, (R3)
-L14566:	MOVB	(R2), R0
+	ADD	R2, R3
+L14534:	MOVB	#000000, R5		;WARN: mutable argument
+	ASL	R5		;
+	MOV	PXCONH(R5), R5	;
+	MOV	#000010, R1		; 8.
+	MOV	#MMODE5, @#177716	; п▓п╨п╩я▌я┤п╟п╣п╪ я─п╣п╤п╦п╪ п©п╟п╪я▐я┌п╦ 5
+L14560:	MOV	(R3), R0		; <
+	XOR	R5, R0
+	MOV	R0, (R3)
+	MOV	(R2), R0
 L14570:	XOR	R5, R0
-L14572:	MOVB	R0, (R2)
-L14574:	ADD	#000100, R2
+L14572:	MOV	R0, (R2)
+L14574:	ADD	#000100, R2		; next line
 L14600:	ADD	#000100, R3
 L14604:	SOB	R1, L14560		; repeat
-L14606:	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
+L14606:	MOV	#MMODE1, @#177716	; п▓п╨п╩я▌я┤п╟п╣п╪ я─п╣п╤п╦п╪ п©п╟п╪я▐я┌п╦ 1
 	NOP3
 L14622:	MOV	#114536, R3
 L14626:	ASLB	(R3)
@@ -5377,8 +5378,8 @@ L15502:	JMP	L10606
 L15506:	MOV	#000372, R1
 L15512:	CALL	L10244
 L15516:	MOV	#000372, R1
-L15522:	CALL	L10244
-L15526:	RETURN
+	JMP	L10244
+	NOP1
 ;
 L15530:	.ASCII	/CONGRATULATIONS/
 L15547:	.ASCII	/YOU HAVE COMPLETED/
@@ -5397,14 +5398,14 @@ L15664:	BISB	#000340, R0
 L15670:	MOV	R0, R3
 L15672:	SWAB	R3
 ; Sound
-L15674:	BIC	#000140, @#157706	; sound
-L15702:	BIS	#000200, @#157706	; sound timer
+L15674:	NOP3	;BIC	#000140, @#157706	; sound
+L15702:	NOP3	;BIS	#000200, @#157706	; sound timer
 L15710:	NOP3	;MOV	@#157706, @#177604	; set SysRegC MS0515
 L15716:	MOVB	(R3)+, K01604
 L15722:	DECB	K01604
 L15726:	BNE	L15722
-L15730:	BIC	#000200, @#157706	; sound timer
-L15736:	BIS	#000140, @#157706	; sound
+L15730:	NOP3	;BIC	#000200, @#157706	; sound timer
+L15736:	NOP3	;BIS	#000140, @#157706	; sound
 L15744:	NOP3	;MOV	@#157706, @#177604	; set SysRegC MS0515
 L15752:	SOB	R1, L15674
 L15754:	RETURN
@@ -5444,8 +5445,8 @@ L30724 = 130724			; Enemy 0 tile screen address
 ; Tile screen 32x18 = 576. bytes
 L32024 = 132024			; Enemy 1 tile screen address
 
-; Таблица под расширение байта в слово для вывода на экран
+; п╒п╟п╠п╩п╦я├п╟ п©п╬п╢ я─п╟я│я┬п╦я─п╣п╫п╦п╣ п╠п╟п╧я┌п╟ п╡ я│п╩п╬п╡п╬ п╢п╩я▐ п╡я▀п╡п╬п╢п╟ п╫п╟ я█п╨я─п╟п╫
 L33124 = 133124
-PXCONH = L33124 + <128.*2.>	; Середина таблицы конвертации
+PXCONH = L33124 + <128.*2.>	; п║п╣я─п╣п╢п╦п╫п╟ я┌п╟п╠п╩п╦я├я▀ п╨п╬п╫п╡п╣я─я┌п╟я├п╦п╦
 
 	.END

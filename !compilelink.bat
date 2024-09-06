@@ -11,7 +11,7 @@ set "DATESTAMP=%YYYY%-%MM%-%DD%"
 for /f %%i in ('git rev-list HEAD --count') do (set REVISION=%%i)
 echo REV.%REVISION% %DATESTAMP%
 
-rem echo 	.ASCII /REV.%REVISION% %DATESTAMP%/ > VERSIO.MAC
+echo 	.ASCII /REV.%REVISION% %DATESTAMP%/ > VERSIO.MAC
 
 @if exist TILES.OBJ del TILES.OBJ
 @if exist S2CORE.LST del S2CORE.LST
@@ -67,7 +67,7 @@ set "codelzsize=%fsize%"
 rem echo Compressed size %codelzsize%
 
 rem Reuse VERSIO.MAC to pass parameters into S2BOOT.MAC
-echo S2LZSZ = %codelzsize%. > VERSIO.MAC
+echo S2LZSZ = %codelzsize%. >> VERSIO.MAC
 
 %rt11exe% MACRO/LIST:DK: S2BOOT.MAC
 
