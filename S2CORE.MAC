@@ -24,7 +24,7 @@
 ; Режимы для регистра управления памятью
 ;          .___1___...00.00	Стр.	Назначение
 MMODE0 = ^B0001110000000000	; 5:4  -  системный
-MMODE4 = ^B0011110000000000	; 3:4  -  для загрузки
+MMOD34 = ^B0011110000000000	; 3:4  -  для загрузки
 MMODE1 = ^B0011100000000000	; 3:1  -  основной
 MMODE5 = ^B0001100000000000	; 5:1  -  для рисования на экране at 040000-077777 window
 
@@ -35,12 +35,9 @@ K01000:	MTPS	#000340			; Disable interrupts
 	MOV	#1000, SP
 ;	MOV	#1330, @#177664		; Устанавливаем стандартное значение скролла
 ;	MOV	#MMODE1, @#177716	; Включаем основной режим памяти
-;K01206:	MOV	#004000, <K01224+2>	; set filler
-K01214:	CALL	K01224			; Clear the screen
-	CALL	PREPAR
-K01220:	JMP	K06660
+K01220:	JMP	START
 
-	.BLKW	20	;NOTE: Свободное место
+	.BLKW	24	;NOTE: Свободное место
 ;
 ; Clear 1024.*8.*2. = 16K bytes on the screen
 K01224:	MOV	#000000, R0		; Filler value  WARN: mutable argument
@@ -778,18 +775,19 @@ K05170:	;MOV	R2, R4			;   <
 	POP	R1
 	POP	R3
 	RETURN
-	NOP3
-	NOP3
-	NOP3
-	NOP3
-	NOP3
-	NOP1
+
+	.BLKW	14	;NOTE: Свободное место
+;
 ; Table of addrs: Nothing, Shuriken, Knife, Empty Box, Question, Pipe, Question, Wrench
 K05254:	.WORD	K05274, K05450, K05624, K06000, K06154, K06504, K06154, K06330
-; Item pictograms 24x32
+; Item pictograms 32x24, 108. bytes each * 7 = 756. bytes total
 .INCLUDE /S2ITEM.MAC/
 
-; Coming here from K01220
+START:
+;K01206:	MOV	#004000, <K01224+2>	; set filler
+	CALL	K01224			; Clear the screen
+	CALL	PREPAR
+;
 ; Preparing table for byte mirroring, but starting from 200
 K06660:	MOV	#000200, R4		; ^B10000000
 K06664:	CLR	R0
