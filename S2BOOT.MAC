@@ -1,0 +1,182 @@
+	.TITLE	S2BOOT
+
+; Режимы для регистра управления памятью
+;          .___1___...00.00	Стр.	Назначение
+MMODE0 = ^B0001110000000000	; 5:4  -  системный
+MMODE4 = ^B0011110000000000	; 3:4  -  для загрузки
+MMODE1 = ^B0011100000000000	; 3:1  -  основной
+MMODE5 = ^B0001100000000000	; 5:1  -  для рисования на экране
+
+; Значение регистра управления палитрами для заставки
+;          ST..____........
+;PMODES = ^B0100111000000000	; Экран стр.5, таймер отключен, палитра 14
+
+S2LZS2 = <<S2LZSZ + 1> / 2> * 2		; S2LZSZ но выровненный до слова
+
+STBOOT:	BR	STBOO2
+
+;------------------------------------------------------------------------------
+
+; https://github.com/purplesyringa/lzsa3
+; Optimized LZSA3 decompressor for PDP-11 by Manwe and Ivanq. Thanks to Ivan Gorodetsky
+; Usage: MOV #src_adr,R1 / MOV #dst_adr,R2 / CALL UNLZSA
+UNLZSA:
+	CLR R5				; no nibbles sign
+10$:	MOVB (R1)+,R3			; read token
+;Liter:
+20$:	MOV R3,R0
+	BIC #177774,R0			; get 2 bits
+	BEQ 30$
+	CMP R0,#3			; literals length
+	BNE 25$
+	CALL 110$
+25$:	MOVB (R1)+,(R2)+		; literals length in R0
+	SOB R0,25$
+;Decode:
+30$:	MOV R3,-(SP)
+	ROLB R3				; get 2 bits
+	ROL R0
+	ROLB R3
+	ROL R0
+	ASL R0
+	ADD R0,PC			; run subroutine
+	BR 90$
+	BR 70$
+	BR 80$
+;o5bit:
+40$:	CALL 100$			; get nibble in R0
+	ROLB R3
+	ROL R0
+	INC R0
+;Save:
+50$:	MOV R0,R4			; save offset for future
+;Match:
+55$:	MOV (SP)+,R0
+	ASR R0
+	ASR R0
+	BIC #177770,R0			; get 3 bits
+	CMP R0,#7
+	BNE 60$
+	CALL 110$
+	TSTB R0				; match length
+	BEQ 120$
+;Clone:
+60$:	MOV R2,R3
+	SUB R4,R3
+	MOVB (R3)+,(R2)+
+	INC R0
+61$:	MOVB (R3)+,(R2)+
+	SOB R0,61$
+	BR 10$
+;o9bit:
+70$:	CLR R0
+	BISB (R1)+,R0
+	ROLB R3
+	ROL R0
+	INC R0
+	BR 50$
+;o13bit:
+80$:	CALL 100$ 			; get nibble in R0
+	ROLB R3
+	ROL R0
+	SWAB R0
+	BISB (R1)+,R0			; 8 bits
+	ADD #513.,R0
+	BR 50$
+;oOther:
+90$:	ROLB R3
+	BCS 55$
+	BISB (R1)+,R0			; read 16 bits
+	SWAB R0
+	BISB (R1)+,R0
+	BR 50$
+;Nibble:
+100$:	COM R5
+	BMI 101$
+	MOV R5,R0
+	CLR R5
+	BR 102$
+101$:	BICB (R1)+,R5			; read 2 nibbles
+	MOV R5,R0
+	ASR R0
+	ASR R0
+	ASR R0
+	ASR R0
+102$:	BIC #177760,R0			; leave 4 low bits
+	RETURN
+;Extend:
+110$:	MOV R0,-(SP)			; save original value
+	CALL 100$ 			; get nibble in R0
+	BNE 112$
+	BISB (R1)+,R0
+	BNE 111$
+	; unnecessary for short files
+	BISB (R1)+,R0			; read high byte
+	SWAB R0
+	BISB (R1)+,R0			; read low byte
+	TST (SP)+			; skip saved R0
+	RETURN
+111$:	ADD #15.,R0
+112$:	DEC R0
+	ADD (SP)+,R0			; add original value
+;Exit:
+120$:	RETURN
+	NOP	; Тут начинается основной код
+	NOP
+
+;------------------------------------------------------------------------------
+STBOO2:
+	MTPS	#340			; disable all interruptions
+;	MOV	#1330, @#177664		; Устанавливаем стандартное значение скролла
+;	MOV	#PMODES, @#177662	; Устанавливаем палитру для заставки
+;; Загрузить сжатый экран заставки
+;	MOV	#PBLK1, R1
+;	CALL	@#120002		; вызов ANDOS
+;; Разархивировать сжатый экран заставки
+;	MOV	#002000, R1		; Откуда
+;	MOV	#040000, R2		; Куда: экран
+;	CALL	UNLZSA
+; Загрузить сжатый блок кода
+	MOV	#MMODE4, @#177716	; Включаем режим памяти 4, для загрузки кода
+	MOV	#PBLK2, R1
+	CALL	@#120002		; вызов ANDOS
+; Переместить сжатый блок кода
+	MOV	#MMODE1, @#177716	; Включаем режим памяти 1, основной
+	MOV	#140000, R2		; Адрес ДО которого перемещаем
+	MOV	#<2000+S2LZS2>, R1	; Адрес с которого перемещаем, верхняя граница
+	MOV	#<S2LZS2/2>, R3
+1$:	MOV	-(R1), -(R2)
+	SOB	R3, 1$
+; Разархивировать блок кода
+	MOV	#<140000-S2LZS2>, R1	; Откуда
+	MOV	#001310, R2		; Куда
+	MOV	R2, -(SP)		; Адрес возврата
+	JMP	UNLZSA
+
+; Добавляем эти строчки, чтобы в готовом файле была видна версия
+	.ASCII	/ SABOT2 BK11M /
+.INCLUDE /VERSIO.MAC/
+	.EVEN
+
+;PBLK1:
+;	.BYTE	3	; Команда 3 = читать файл
+;	.BYTE	0	; Ответ
+;	.WORD	2000	; Адрес
+;	.WORD	6210.	; Размер ;TODO: брать после сжатия экрана
+;	.ASCII	/S2SCRN.LZS      /
+;	.WORD	0
+;	.WORD	0
+;	.ASCII	/                /
+PBLK2:
+	.BYTE	3	; Команда 3 = читать файл
+	.BYTE	0	; Ответ
+	.WORD	2000	; Адрес
+	.WORD	S2LZSZ	; Размер - берём после компиляции S2CORE.MAC
+	.ASCII	/S2CORE.LZS      /
+	.WORD	0
+	.WORD	0
+	.ASCII	/                /
+
+;------------------------------------------------------------------------------
+
+	.END	STBOOT
