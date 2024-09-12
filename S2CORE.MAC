@@ -804,15 +804,15 @@ K06714:	MOVB	R0, (R3)+
 K06716:	INCB	R4
 K06720:	SOB	R1, K06676		; repeat
 ;
-K06722:	JMP	K07326			; Go to Menu
+K06722:	JMP	K07326			; OUTBF Go to Menu
 ;
 ;K06726:
 .INCLUDE /S20DD6.MAC/
 ;
 ; Coming here from K06722
-; Prepare for Menu and start the Menu
-K07326:	CALL	L07634			; Draw Ninja for Menu
-	JMP	L11224			; Entering Menu
+; OUTBF: Prepare for Menu and start the Menu
+K07326:	CALL	L07634			; INITHI Draw Ninja for Menu
+	JMP	L11224			; CLAW1 Entering Menu
 ;
 K07336:	.ASCII	/PRESS ANY KEY TO CONTINUE/
 ; Levels info
@@ -952,7 +952,7 @@ K11324:	CALL	K01704			; PRINT string "PREPARE TO BEGIN"
 ;K11340:	MOV	#000031, R1		; 25.
 ;K11344:	CALL	K01704			; PRINT string
 ;K11350:	CALL	L13024			; Empty keyboard buffer
-K11354:	CALL	L13100			; Get a key
+K11354:	CALL	L13100			; PAWS0 Get a key
 ; After the briefing - clear the screen, show the indicator panel
 K11360:	CLR	<K01224+2>		; set filler
 K11364:	NOP3	;MOVB	#000011, <K01224+3>
@@ -1088,7 +1088,7 @@ K12405:	.ASCII	/HELD/
 	.ASCII	/NEAR/
 K12422:	.ASCII	/ /
 K12423:	.ASCII	/PAY $0000000 /		; MONEY
-	.ASCIZ	/XXXXXXXXXXX/
+K12440:	.ASCIZ	/XXXXXXXXXXX/		; NAME
 	.EVEN
 ;
 ; Starting the game, indicator panel frame is already shown
@@ -4720,7 +4720,7 @@ K60677 = K60640 + 37			; LFT3 lift position byte: 377 = DOWN, 0 = UP
 ; Font regular, 8x8, 8. bytes each, 96. symbols = 768. bytes
 .INCLUDE /S2FONT.MAC/
 
-; Procedure: Draw Ninja for Menu
+; INITHI procedure: Draw Ninja for Menu
 L07634:	MOV	#L04120, R3
 L07640:	MOV	#L24324, R2		; BUFFD Address where prepared picture will be placed
 L07644:	MOVB	(R3), R0		; <
@@ -4796,7 +4796,7 @@ L10146:	NOP2	;ADD	#001100, R3
 L10152:	NOP1	;SOB	R1, L10054		; repeat
 L10154:	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
 	POP	R4
-	JMP	L10320			; Clear Menu left part, and return
+	JMP	L10320			; CLSLF Clear Menu left part, and return
 	NOP1
 	NOP3
 ;
@@ -4875,7 +4875,7 @@ PREPAR:
 L10560:	.ASCIZ	/                     /	; SPCHR 21. space char
 ;
 ; FNISH:
-L10606:	CALL	L07634			; Draw Ninja for Menu
+L10606:	CALL	L07634			; INITHI Draw Ninja for Menu
 L10612:	MOVB	#000017, R1
 L10616:	MOV	#114017, R3
 L10622:	MOV	#012430, R2
@@ -4907,7 +4907,7 @@ L10742:	CALL	K01704			; PRINT string "NINJA SABOTEUR"
 L10746:	MOV	#044143, R2
 L10752:	MOV	#000017, R1		; 15.
 L10756:	CALL	K01704			; PRINT string "ENTER YOUR NAME"
-L10762:	CALL	L12570
+L10762:	CALL	L12570			; INPUT string
 L10766:	POP	R1
 L10770:	MOV	#114437, R3
 L10774:	MOV	#114416, R2
@@ -4926,8 +4926,8 @@ L11040:	MOV	#000013, R1
 L11044:	MOVB	(R3)+, (R2)+
 L11046:	SOB	R1, L11044
 ;
-; Show the score table
-L11050:	CALL	L10320			; Clear Menu left part
+; NOYBA: Show the score table
+L11050:	CALL	L10320			; CLSLF Clear Menu left part
 L11054:	MOV	#000013, R1		; 11.
 L11060:	MOV	#L14004, R3		; "HIGH SCORES"
 L11064:	MOV	#040143, R2
@@ -4952,45 +4952,48 @@ L11164:	POP	R2
 L11166:	ADD	#000040, R2
 L11172:	BIT	#000340, R2
 L11176:	BNE	L11210
-L11200:	SUB	#000400, R2
-L11204:	ADD	#004000, R2
+	ADD	#<004000-400>, R2
 L11210:	SOB	R4, L11112		; repeat
-L11212:	POP	R4
-L11214:	CALL	L13024			; Empty keyboard buffer
-L11220:	CALL	L13100			; Get a key
-; Entering the Menu; Ninja at right drawn already
-L11224:	CALL	L10320			; Clear Menu left part
-L11230:	MOV	#L13502, R3		; "K  KEYBOARD" etc.
-L11234:	MOV	#000013, R1		; 11.
-L11240:	MOV	#040203, R2
-L11244:	CALL	K01704			; PRINT string "K  KEYBOARD"
-L11250:	MOV	#000011, R1		; 9.
-L11254:	MOV	#040303, R2
-L11260:	CALL	K01704			; PRINT string "P  PROTEK"
-L11264:	MOV	#000013, R1		; 11.
-L11270:	MOV	#044003, R2
-L11274:	CALL	K01704			; PRINT string "J  KEMPSTON"
-L11300:	MOV	#000020, R1		; 16.
-L11304:	MOV	#044143, R2
-L11310:	CALL	K01704			; PRINT string "R REDEFINE KEYS "
-L11314:	MOV	#000020, R1		; 16.
-L11320:	MOV	#044243, R2
-L11324:	CALL	K01704			; PRINT string "M  ALTER MISSION"
-L11330:	MOV	#000015, R1		; 13.
-L11334:	MOV	#050003, R2
-L11340:	CALL	K01704			; PRINT string "S  START GAME"
-L11344:	CALL	L13024			; Empty keyboard buffer
-L11350:	CALL	L13474			; Show Menu selection
-L11354:	MOV	#072460, R1
-; Menu waiting loop
+	POP	R4
+	CALL	L13024			; KPASE Empty keyboard buffer
+;TODO: Сделать здесь ожидание и переключение на меню
+	NOP2
+	CALL	L13100			; PAWS0 Get a key
+; CLAW1: Entering the Menu; Ninja at right drawn already
+L11224:	CALL	L10320			; CLSLF Clear Menu left part
+	MOV	#L13502, R3		; "K  KEYBOARD" etc.
+	MOV	#000013, R1		; 11.
+	MOV	#040203, R2
+	CALL	K01704			; PRINT string "K  KEYBOARD"
+;NOTE: Protek убран, не нужно на БК
+	MOV	#000013, R1		; 11.
+	MOV	#040303, R2
+	CALL	K01704			; PRINT string "J  JOYSTICK"
+	MOV	#000020, R1		; 16.
+	MOV	#044043, R2
+	CALL	K01704			; PRINT string "R REDEFINE KEYS "
+	MOV	#000020, R1		; 16.
+	MOV	#044243, R2
+	CALL	K01704			; PRINT string "M  ALTER MISSION"
+	MOV	#000015, R1		; 13.
+	MOV	#044343, R2
+	CALL	K01704			; PRINT string "S  START GAME"
+	MOV	#000007, R1		; 7.
+	MOV	#050103, R2
+	CALL	K01704			; PRINT string "X  EXIT"
+	CALL	L13024			; KPASE Empty keyboard buffer
+	CALL	L13474			; Show Menu selection
+	MOV	#50000., R1		; menu delay
+; DLNX2: Menu waiting loop
 L11360:	PUSH	R1
 L11362:	CALL	L13036			; Read a key
 L11366:	CMPB	R0, #000113		; 'K' - KEYBOARD
 L11372:	BNE	L11400
 L11374:	JMP	L13146			; Keyboard selected
-L11400:	CMPB	R0, #000120		; 'P' - PROTEK
-L11404:	BNE	L11412
-L11406:	JMP	L13162			; Protek selected
+;TODO: Проверять 'X' - EXIT
+L11400:	NOP2
+	NOP1
+	NOP2
 L11412:	CMPB	R0, #000112		; 'J' - KEMPSTON
 L11416:	BNE	L11424
 L11420:	JMP	L13206			; Kempston selected
@@ -5007,10 +5010,10 @@ L11456:	POP	R1
 L11460:	JMP	K10624			; Start the game
 L11464:	POP	R1
 L11466:	DEC	R1			; decrease timer
-L11470:	BNE	L11360
-L11472:	JMP	L11050			; Time is out, switch to score table
+L11470:	BNE	L11360			; => DLNX2
+L11472:	JMP	L11050			; Time is out => NOYBA
 ; Alter Mission selected
-L11476:	CALL	L10320			; Clear Menu left part
+L11476:	CALL	L10320			; CLSLF Clear Menu left part
 L11502:	MOV	#040104, R2
 L11506:	MOV	#L12225, R3		; "TYPE REQUIRED"
 L11512:	MOV	#000015, R1		; 13.
@@ -5024,16 +5027,18 @@ L11546:	CALL	K01704			; PRINT string "OR PRESS ENTER"
 L11552:	MOV	#044042, R2
 L11556:	MOV	#000021, R1		; 17.
 L11562:	CALL	K01704			; PRINT string "FOR FIRST MISSION"
-L11566:	CALL	L13024
-L11572:	CALL	L12570
-L11576:	MOV	#000011, R5
-L11602:	MOV	#112062, R3
-L11606:	MOV	#012440, R2
+L11566:	CALL	L13024			; KPASE
+L11572:	CALL	L12570			; INPUT string
+; Calculate new mission type
+L11576:	MOV	#000011, R5		; 9. codes
+L11602:	MOV	#L12062, R3		; CODES address
+; NXCDL:
+L11606:	MOV	#K12440, R2		; NAME address
 L11612:	MOV	#000013, R1
 L11616:	PUSH	R3
-L11620:	CMPB	(R2)+, (R3)+
-L11622:	BNE	L11712
-L11624:	SOB	R1, L11620
+L11620:	CMPB	(R2)+, (R3)+		; < check a character
+L11622:	BNE	L11712			; | no => NXCDE
+L11624:	SOB	R1, L11620		; repeat
 L11626:	POP	R3
 L11630:	MOV	R5, L11666		; Mission Level
 L11634:	ADD	#000060, R5		; +'0'
@@ -5048,9 +5053,10 @@ L11666:	.WORD	1			; MSLEV - Mission Level number
 ;
 L11670:	.ASCII	/MISSION X SELECTED/
 ;
-L11712:	POP	R3			; subcode not found - pop addr of last level code
-L11714:	ADD	#000013, R3		; 11.  go to code for next level
-L11720:	SOB	R5, L11606		; go for rest
+; NXCDE: Subcode not found
+L11712:	POP	R3			; pop addr of last level code
+	ADD	#000013, R3		; 11.  go to code for next level
+	SOB	R5, L11606		; go for rest
 ; Code not listed
 L11722:	MOV	#L12030, R3		; "MISSION CODE"
 L11726:	MOV	#044245, R2
@@ -5066,13 +5072,14 @@ L11772:	CALL	K01704			; PRINT string "PRESS ANY KEY"
 L11776:	MOV	#050304, R2
 L12002:	MOV	#000014, R1		; 12.
 L12006:	CALL	K01704			; PRINT string " TO CONTINUE"
-L12012:	CALL	L13024
-L12016:	CALL	L13100
+L12012:	CALL	L13024			; KPASE
+L12016:	CALL	L13100			; PAWS0
 L12022:	POP	R1
 L12024:	JMP	L11224			; Return to Menu => CLAW1
 ;
 L12030:	.ASCII	/MISSION CODE/
 L12044:	.ASCII	/NOT RECOGNISED/
+; CODES:
 L12062:	.ASCII	/SATORI     /
 	.ASCII	/DIM MAK    /
 	.ASCII	/MI LU KATA /
@@ -5089,12 +5096,12 @@ L12225:	.ASCII	/TYPE REQUIRED/
 	.EVEN
 
 ; Redefine Keys selected in Menu
-L12316:	CALL	L10320			; Clear Menu left part
+L12316:	CALL	L10320			; CLSLF Clear Menu left part
 L12322:	MOV	#040106, R2
 L12326:	MOV	#<L13540+2>, R3		; "REDEFINE KEYS"
 L12332:	MOV	#000015, R1		; 13.
 L12336:	CALL	K01704			; PRINT string
-L12342:	CALL	L13024			; Empty keyboard buffer
+L12342:	CALL	L13024			; KPASE Empty keyboard buffer
 L12346:	MOV	#040204, R2
 L12352:	MOV	#L13115, R3		; "UP   " etc.
 L12356:	PUSH	R5
@@ -5124,7 +5131,7 @@ L12474:	CALL	K01704			; PRINT string
 L12500:	MOVB	<L13112+1>, R0		; get key name
 L12504:	MOVB	R0, (R4)+
 L12506:	ADD	#000002, R4
-L12512:	CALL	L13024			; Empty keyboard buffer
+L12512:	CALL	L13024			; KPASE Empty keyboard buffer
 L12516:	MOV	<L12374+2>, R2
 L12522:	MOV	#000002, R3
 L12526:	ADD	#000040, R2		; <
@@ -5139,15 +5146,15 @@ L12556:	BNE	L12370			; repeat
 L12560:	POP	R5
 L12562:	POP	R1
 L12564:	JMP	L11224			; Return to Menu
-;
-L12570:	MOV	#000013, R1
-L12574:	MOV	#012440, R3
-L12600:	MOVB	#000040, (R3)+
-L12604:	SOB	R1, L12600
+; INPUT procedure: Input NAME string, up to 11. chars
+L12570:	MOV	#000013, R1		; 11.
+L12574:	MOV	#K12440, R3		; NAME address
+L12600:	MOVB	#040, (R3)+		; < ' '
+L12604:	SOB	R1, L12600		; repeat
 L12606:	MOV	#000001, R1
 L12612:	MOV	#054646, K01606
 L12620:	MOV	#044246, R2
-L12624:	MOV	#012440, R3
+L12624:	MOV	#K12440, R3		; NAME address
 L12630:	PUSH	R1
 L12632:	PUSH	R2
 L12634:	MOV	K01606, R2
@@ -5189,7 +5196,7 @@ L13012:	MOV	#000016, R0
 	JMP	L13224			; calc screen attr address and set attrs for 8x8 block
 	NOP1
 ;
-; Procedure: Empty keyboard buffer
+; KPASE procedure: Empty keyboard buffer
 L13024:	CALL	L13036			; Read a key
 L13030:	TSTB	R0
 L13032:	BNE	L13024
@@ -5205,7 +5212,7 @@ L13036:
 	NOP3
 	NOP3
 	NOP3
-; Procedure: Get a key
+; PAWS0 procedure: Get a key
 L13100:	CALL	L13036			; Read a key
 L13104:	TSTB	R0
 L13106:	BEQ	L13100
@@ -5218,17 +5225,18 @@ L13115:	.ASCII	/UP   /
 	.ASCII	/RIGHT/
 	.ASCII	/FIRE /
 
+	NOP2
+	NOP2
+	NOP2
+
 ; Keyboard selected in Menu
 L13146:	CALL	L13424			; Clear Menu selection
 L13152:	MOV	#054202, R3
 L13156:	CLR	R0
 L13160:	BR	L13176			; Show Menu selection and Continue to Menu
-; Protek selected
-L13162:	CALL	L13424			; Clear Menu selection
-L13166:	MOV	#K54302, R3		; LEP5P address
-L13172:	MOV	#000002, R0
+;NOTE: Protek убран - не нужно на БК
 L13176:	CALL	L13464			; Show Menu selection
-L13202:	JMP	L11464			; Continue to Menu
+	JMP	L11464			; Continue to Menu
 ; Kempston selected
 L13206:	CALL	L13424			; Clear Menu selection
 L13212:	MOV	#054402, R3
@@ -5285,9 +5293,9 @@ L13424:	MOV	#000016, R0		; attribute
 L13430:	MOV	#054202, R2		; WARN: mutable argument
 L13434:	CALL	L13242
 L13440:	MOV	#000015, R1		; 13.
-L13444:	PUSH	R2		; <
+L13444:	PUSH	R2			; <
 L13446:	CALL	L13312			; |  set attributes for 8x8 block
-L13452:	POP	R2		; |
+L13452:	POP	R2			; |
 L13454:	INC	R2			; |  next column
 L13456:	INC	R2			; |
 L13460:	SOB	R1, L13444		; repeat
@@ -5300,11 +5308,12 @@ L13500:	BR	L13430
 ;
 ; Text for Menu
 L13502:	.ASCII	/K  KEYBOARD/
-	.ASCII	/P  PROTEK/
-	.ASCII	/J  KEMPSTON/
-L13540:	.ASCII	/R REDEFINE KEYS /
+L13526:	.ASCII	/J  JOYSTICK/
+L13540:	.ASCII	/R  REDEFINE KEYS/
 	.ASCII	/M  ALTER MISSION/
 	.ASCII	/S  START GAME/
+	.ASCII	/X  EXIT/		;TODO
+	NOP1
 ;
 L13616:	POP	R1
 L13620:	CMPB	R1, #000001
@@ -5500,8 +5509,8 @@ L15452:	CALL	K01704			; PRINT string "PRESS ANY KEY"
 L15456:	MOV	#050304, R2
 L15462:	MOV	#000014, R1		; 12.
 L15466:	CALL	K01704			; PRINT string " TO CONTINUE"
-L15472:	CALL	L13024
-L15476:	CALL	L13100
+L15472:	CALL	L13024			; KPASE
+L15476:	CALL	L13100			; PAWS0
 L15502:	JMP	L10606			; => FNISH
 ; PLFHN procedure: MONEY up 500.
 L15506:	MOV	#000372, R1		; 250.
@@ -5519,7 +5528,7 @@ L15632:	.ASCII	/STAGE X IS"/
 
 L15646:	.WORD	0	; RMTIME
 
-;  CRUNCH procedure: Sound CRUNCH noise
+; CRUNCH procedure: Sound CRUNCH noise
 L15650:	MOV	#000144, R1		; 100.
 L15654:	CALL	K01314
 L15660:	BICB	#177417, R0
