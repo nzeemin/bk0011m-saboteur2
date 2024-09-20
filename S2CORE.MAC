@@ -427,7 +427,7 @@ K03014:	MOVB	@K04660, R0		; get tile from Enemy 1 tile screen
 	BISB	R0, (R2)+
 	CALL	K36056			; G2DIS
 ; NINJA:
-K03364:	MOVB	K03542, K41175		; (NJCOL+1) -> TMPNC
+K03364:	MOVB	K03542, K41175		; save (NJCOL+1) to TMPNC
 	CLR	R3
 	MOVB	@K04652, R0		; get tile from Ninja tile screen
 	BISB	R0, R3
@@ -446,7 +446,7 @@ K03412:	CMPB	R0, #000341		; 225.
 K03442:	MOVB	K04673, R0		; get BAKCR
 	DECB	R0
 	BNE	K03462			; => WILSN
-	MOVB	#007, K03542		; set (NJCOL+1) to 7
+	MOVB	#007, K03542		; set (NJCOL+1) to 7 white
 	BR	K03544			; => HYPN2
 ; WILSN:
 K03462:	MOVB	K04673, R0		; get BAKCR
@@ -466,13 +466,13 @@ K03516:	MOVB	K41174, R0		; get (FFCOL+1)
 	POP	R3
 	BR	K03560			; => HYPNO
 ;
-K03542:	.BYTE	0			; ??
+K03542:	.BYTE	0			; NJCOL+1 - Ninja color 0..7
 	.EVEN
 ; HYPN2:
-K03544:	BICB	#177407, K04672		; COL
-	BISB	K03542, K04672		; set COL
+K03544:	BICB	#177407, K04672		; COL keep PAPER color
+	BISB	K03542, K04672		; set COL from (NJCOL+1)
 ; HYPNO:
-K03560:	MOVB	K41175, K03542		; TMPNC -> NJCOL+1
+K03560:	MOVB	K41175, K03542		; restore TMPNC -> NJCOL+1
 	ASL	R3
 	ASL	R3
 	ASL	R3			; *8.
@@ -835,7 +835,7 @@ K07326:	CALL	L07634			; INITHI Draw Ninja for Menu
 	JMP	L11224			; CLAW1 Entering Menu
 ;
 K07336:	.ASCII	/PRESS ANY KEY TO CONTINUE/
-; Levels info
+; Missions info
 K07367:	.ASCII	/RIN  999/
 	.ASCII	/  STRENGTH OF MIND AND BODY   00/
 	.BYTE	000, 000, 377, 377
@@ -864,14 +864,14 @@ K10127:	.ASCII	/ZEN  999/
 	.ASCII	/        ENLIGHTENMENT         14/
 	.BYTE	016, 001, 356, 377
 	.EVEN
-; Levels table
+; Missions table
 K10204:	.WORD	K07367, K07367, K07443, K07517, K07573, K07647, K07723, K07777
 	.WORD	K10053, K10127
 
 K10230:	.ASCII	/MISSION   BRIEFING/
 K10252:	.ASCII	/LEVEL 0/
 K10261:	.ASCII	/KILL ENEMY GUARDS/
-	.ASCII	/ESCAPE FROM BUILDING VIA TUNNELS/
+K10302:	.ASCII	/ESCAPE FROM BUILDING VIA TUNNELS/
 	.ASCII	/"#/
 	.ASCII	/GOOD LUCK ON YOUR MISSION/
 	.ASCII	/PREPARE TO BEGIN/
@@ -881,7 +881,7 @@ K10473:	.ASCII	/INSERT TAPE IN MISSILE CONSOLE/
 K10531:	.ASCII	/DISABLE ELECTRIFIED FENCE/
 K10562:	.ASCII	/SMASH THROUGH FENCE ON MOTORBIKE/
 ;
-K10622:	.WORD	0
+K10622:	.WORD	0			; LVPTR
 
 ; Start Game selected in Menu - show level briefing
 K10624:	CLR	<K01224+2>		; set filler
@@ -916,7 +916,7 @@ K10770:	MOVB	(R3)+, (R2)+		; <
 	CALL	K01704			; PRINT string
 	MOVB	(R3)+, <K10434+10>	; higher digit in "COLLECT XX"
 	MOVB	(R3), <K10434+11>	; lower digit
-	MOV	R3, K10622
+	MOV	R3, K10622		; set LVPTR
 	MOV	R3, R4
 	MOVB	000001(R4), 052626	; set NTPND
 	BEQ	K11056
@@ -926,7 +926,7 @@ K10770:	MOVB	(R3)+, (R2)+		; <
 	CALL	K01704			; PRINT string
 K11056:	MOVB	000004(R4), K17200	; set BIKER
 	MOV	#000377, R0
-	CMPB	#177777, K17200		; check BIKER
+	CMPB	#177777, K17200		; BIKER == 255. ?
 	BNE	K11124
 	MOV	#K10562, R3		; "SMASH THROUGH FENCE ON MOTORBIKE"
 	MOV	#044200, R2
@@ -947,10 +947,13 @@ K11160:	MOVB	000003(R4), <K31220+2>
 	MOV	#044103, R2
 	MOV	#000031, R1
 	CALL	K01704			; PRINT string
-K11216:	MOV	#K10261, R3		; "KILL ENEMY GUARDS"
-	MOV	#040347, R2
-	MOV	#000021, R1		; 17.
-	CALL	K01704			; PRINT string "KILL ENEMY GUARDS"
+K11216:
+;NOTE: Не показываю эту надпись для экономии места, да и убивать врагов не нужно
+;	MOV	#K10261, R3		; "KILL ENEMY GUARDS"
+;	MOV	#040347, R2
+;	MOV	#000021, R1		; 17.
+;	CALL	K01704			; PRINT string "KILL ENEMY GUARDS"
+	MOV	#K10302, R3		; "ESCAPE FROM BUILDING VIA TUNNELS"
 	MOV	#044140, R2
 	MOV	#000040, R1		; 32.
 	CALL	K01704			; PRINT string "ESCAPE FROM BUILDING VIA TUNNELS"
@@ -966,36 +969,35 @@ K11216:	MOV	#K10261, R3		; "KILL ENEMY GUARDS"
 	MOV	#050110, R2		; MANBF
 	MOV	#000020, R1		; 16.
 	CALL	K01704			; PRINT string "PREPARE TO BEGIN"
-;NOTE: Временно закомментировал, из-за нехватки слов в K11632 TODO
-;	MOV	#K07336, R3		; "PRESS ANY KEY TO CONTINUE"
-;	MOV	#050343, R2
-;	MOV	#000031, R1		; 25.
-;	CALL	K01704			; PRINT string
-;	CALL	L13024			; Empty keyboard buffer
+	MOV	#K07336, R3		; "PRESS ANY KEY TO CONTINUE"
+	MOV	#050343, R2
+	MOV	#000031, R1		; 25.
+	CALL	K01704			; PRINT string
+	CALL	L13024			; Empty keyboard buffer
 	CALL	L13100			; PAWS0 Get a key
 ; After the briefing - clear the screen, show the indicator panel
 	CLR	<K01224+2>		; set filler
-	NOP3	;MOVB	#000011, <K01224+3>
+	NOP1	;MOVB	#000011, <K01224+3>
 	CALL	K01224			; Clear the screen
 	MOVB	K41304, R0		; get input method
 	MOV	#L15756, R2
-	DECB	R0
-	BEQ	K11436
-	DECB	R0
-	BEQ	K11422
+	DECB	R0			; input method == 1 ? keyboard
+	BEQ	K11436			; yes =>
+		;DECB	R0		; input method == 2 ?
+		;BEQ	K11422
 	MOV	#L15775, R2		; Redefined keys address
 K11422:	MOV	#K41305, R3
-	MOV	#000017, R1		; Copy 15. bytes
-K11432:	MOVB	(R2)+, (R3)+		; <
+	MOV	#000017, R1		; 15. bytes
+K11432:	MOVB	(R2)+, (R3)+		; < copy byte
 	SOB	R1, K11432		; repeat
 K11436:	MOV	#000041, R1		; 33.
 	MOV	#<K23030+4>, R2
 	MOV	#<K23030+11>, R3
 K11452:	PUSH	R1			; <
-	MOV	#000005, R1		; | Copy 5 bytes
-K11460:	MOVB	(R3)+, (R2)+		; | <
+	MOV	#000005, R1		; | 5 bytes
+K11460:	MOVB	(R3)+, (R2)+		; | < copy byte
 	SOB	R1, K11460		; | repeat
-	MOV	#000011, R1
+	MOV	#000011, R1		; | 9.
 	ADD	R1, R3
 	ADD	R1, R2
 	POP	R1
@@ -1112,9 +1114,10 @@ K12440:	.ASCIZ	/XXXXXXXXXXX/		; NAME
 	.EVEN
 ;
 ; Starting the game, indicator panel frame is already shown
-K12454:	MOV	K10622, R3
+; NDPAN:
+K12454:	MOV	K10622, R3		; get LVPTR
 	CLR	R2
-	BISB	000001(R3), R2
+	BISB	000001(R3), R2		; get NTPND byte - tapes needed
 	BEQ	K12504			; jump if no tape needed
 	ADD	#055205, R2		; calculate attr pos of green tape piece
 	MOV	#000014, R0		; attr
@@ -1142,7 +1145,7 @@ K12514:	MOVB	#060, (R3)+		; <
 	MOVB	#046, K36210		; set MANA = 38.
 	MOV	#000406, K36212		; set MANPS
 	NOP3	;MOVB	#001, K36213
-	MOVB	#000021, K36215		; set RMAC room position = 17.
+	MOVB	#021, K36215		; set RMAC room position = 17.
 	MOV	#050205, K51142		; set PTSPS
 	CLR	R0
 	CLRB	K24762
@@ -1150,7 +1153,7 @@ K12514:	MOVB	#060, (R3)+		; <
 	CLRB	K51146			; clear TAPTT
 	CLRB	K17716			; clear BIKMR
 	CLRB	K36216			; clear ELECU
-	CLRB	K03542			; clear NJCOL+1
+	CLRB	K03542			; set (NJCOL+1) = 0 black
 	CLRB	K33540			; clear DEAD
 	CLRB	K36214			; RMDN = 0 top level
 	MOV	#<K23030+4>, K23746	; INITSTA address -> NERST
@@ -1181,7 +1184,7 @@ K13050:	CMPB	R0, #006		; == 6 ?
 K13062:	ADD	R2, R3
 	SOB	R1, K13036		; repeat
 	CALL	K05040			; HLDOD
-; INISC:
+; INISC: Init screen, room changed
 K13072:	MOVB	#005, K26666		; set GDNRG = 5
 	MOVB	#003, L15646		; set RMTIME = 3
 	CLRB	K14640			; clear TVSWT
@@ -1207,7 +1210,7 @@ K13202:	CLRB	(R3)			; <
 	MOVB	K36215, R1		; get RMAC room position
 	MOVB	#001, R0
 	DECB	R1
-	BNE	K13230
+	BNE	K13230			; RMAC == 1 ? no => JIRRT
 ; DRFNT:
 K13224:	MOVB	#001, R0		;!!MUT-ARG!!
 ; JIRRT:
@@ -1330,12 +1333,12 @@ K13426:	.WORD	K20120		; $00 000 - HORLN - Fill horizontally W with tile
 	.WORD	K15432		; $43 103 - DTRE3
 	.WORD	K23772		; $44 104 - LFTDI
 	.WORD	K20132		; $45 105 - DIALF
-	.WORD	K16770		; $46 106 - BIKRD
+	.WORD	K16770		; $46 106 - BIKRD - Motorbike
 	.WORD	K17166		; $47 107 - NCGLD
 	.WORD	K17024		; $48 110 - AUTOR
 	.WORD	K17124		; $49 111 - BKCON
 	.WORD	K17076		; $4A 112 - FRCON
-	.WORD	K17152		; $4B 113 - BCON2
+	.WORD	K17152		; $4B 113 - BCON2 - Console
 	.WORD	K17160		; $4C 114 - FCON2
 	.WORD	K16570		; $4D 115 - BOX5P
 	.WORD	K16632		; $4E 116 - BOX6P
@@ -1364,6 +1367,8 @@ K13426:	.WORD	K20120		; $00 000 - HORLN - Fill horizontally W with tile
 	.WORD	K14676		; $65 145 - WIND4 9x6 tiles
 	.WORD	K14644		; $66 146 - TVCON 6x6 tiles
 	.WORD	K15310		; $67 147 - BKNOB
+;NOTE: MS0515 has no this	; $68 150 - WHIGD
+;NOTE: MS0515 has no this	; $69 151 - YELBX
 ;
 .INCLUDE /S217E6.MAC/
 ;
@@ -1394,7 +1399,7 @@ K14720:	MOV	#062177, R3		; BUFFB+51.
 ; WINDR:
 K14724:	CMPB	K36214, #014		; RMDN compare to 12.
 	BLO	K14740			; less than 12.
-	JMP	K16466			; >= 12. => jump
+	JMP	K16466			; >= 12. => NWUKL
 K14740:	MOV	#K14346, R4		; copy from
 	MOVB	#011, K01604		; width = 9.
 	MOV	#000006, R1		; height = 6
@@ -1691,8 +1696,8 @@ K16350:	CLRB	<L14472+2>		; clear (DECEN+1)
 	BR	K16432			; Copy tiles
 ; Room marker $13 023 - Moon 2x2 tiles
 K16400:	MOV	#062245, R3
-	CMPB	#000001, @#125555
-	BNE	K16466
+	CMPB	#001, @#125555
+	BNE	K16466			; => NWUKL
 	MOV	#K16474, R4		; copy from
 	MOVB	#002, K01604		; width = 2
 	MOV	#000002, R1
@@ -1708,6 +1713,7 @@ K16452:	MOVB	(R4)+, (R3)+		; | < copy tile
 	ADD	R2, R3
 	SOB	R1, K16444		; repeat
 	POP	R5
+; NWUKL:
 K16466:	DEC	(SP)
 	JMP	K13422
 ; Moon in tiles, 2x2 tiles
@@ -1776,9 +1782,9 @@ K16742:	MOV	#K17362, R4		; copy from FDESC
 	MOV	#000004, R1		; height = 4
 	MOV	#064044, R3
 K16764:	JMP	K16432			; Copy tiles
-; Room marker $46 106 - ??? 11x5 tiles
+; Room marker $46 106 - BIKRD - Motorbike 11x5 tiles
 K16770:	MOVB	K17200, R0		; get BIKER
-	INCB	R0
+	INCB	R0			; == 255. ?
 	BNE	K17044
 	MOV	#K17204, R4		; copy from BIKEC
 	MOVB	#000013, K01604		; width = 11.
@@ -1790,7 +1796,7 @@ K17024:	MOVB	K17200, R0		; get BIKER
 	CMPB	R0, #376		; 254.
 	BNE	K17044
 	MOVB	#020, K17200		; set BIKER = 16.
-K17044:	JMP	K16466
+K17044:	JMP	K16466			; => NWUKL
 ; ??? 4x4 tiles
 K17050:	.BYTE	211,212,212,213		; CONS2
 	.BYTE	377,377,041,377
@@ -1801,29 +1807,29 @@ K17070:	.BYTE	322,322,323,323,325	; CONS1
 	.EVEN
 ;
 ; Room marker $4A 112 - FRCON 4x4 tiles
-K17076:	MOV	#063760, R3
+K17076:	MOV	#063760, R3		; BUFFO+356.
 K17102:	MOV	#K17050, R4		; copy from
 	MOVB	#004, K01604		; width = 4
 	MOV	#000004, R1		; height = 4
 	JMP	K16432			; Copy tiles
-; Room marker $49 111 - BKCON 5x1 tiles
-K17124:	MOV	#063057, R3
+; Room marker $49 111 - BKCON Console 5x1 tiles
+K17124:	MOV	#063057, R3		; BUFFB+483.
 K17130:	MOV	#K17070, R4		; copy from
 	MOVB	#005, K01604		; width = 5
 	MOV	#000001, R1		; height = 1
 	JMP	K16432			; Copy tiles
-; Room marker $4B 113 - BCON2 5x1 tiles
-K17152:	MOV	#063034, R3
-	BR	K17130
+; Room marker $4B 113 - BCON2 Console 5x1 tiles
+K17152:	MOV	#063034, R3		; BUFFB+464.
+	BR	K17130			; => BCONC
 ; Room marker $4C 114 - FCON2 4x4 tiles
-K17160:	MOV	#063735, R3
-	BR	K17102
+K17160:	MOV	#063735, R3		; BUFFO+337
+	BR	K17102			; => FCONC
 ; Room marker $47 107
 K17166:	MOVB	#132, K37662		; set SPEED = 90.
-	JMP	K16466
+	JMP	K16466			; => NWUKL
 ;
 K17200:	.BYTE	0, 0			; BIKER
-K17202:	.BYTE	0, 0			; BIKPS
+K17202:	.WORD	0			; BIKPS
 ;
 .INCLUDE /S21E80.MAC/
 ;
@@ -2043,6 +2049,9 @@ K24146:	MOVB	R5, (R3)+		; | <  put one tile
 	JMP	K13422			; => RETRT
 ;
 ; SPARES table, 22. records
+;   +000: room level (compared to RMDN)
+;   +001: room position (compared to RMAC)
+;   +002: index in ROUTS table (markers)
 K24170:
 	.BYTE	033, 007, 106		; Motorbike
 	.BYTE	000, 014, 107		; Increase glider distance
@@ -2077,7 +2086,7 @@ K24310:	CMPB	K36214, (R4)		; <  check RMDN
 	CMPB	K36215, 000001(R4)	; check RMAC
 	BNE	K24360			; => SPARW
 	CLR	R0
-	BISB	000002(R4), R0
+	BISB	000002(R4), R0		; get byte +002
 	ASL	R0
 	MOV	K13426(R0), R3		; get addr from ROUTS table
 	PUSH	R4
@@ -2195,16 +2204,16 @@ K25030:	INC	R3			; | !!MUT-CMD!!
 	SOB	R1, K25026		; repeat
 	MOVB	R0, <K25006+2>
 	MOV	<K13332+2>, R3		; (RM+1)
-	CMPB	(R3), #072		; room == 58. ?
+	CMPB	(R3), #072		; room type == $3A ? lift top
 	BNE	K25072
-; Room 58. = $3A
+; Room 58. = $3A - lift shaft top
 	MOV	#000006, R1		; 6.
 	MOV	#K26660, R2		; " LIFT "
 	MOV	#126665, R3
 	CALL	K04604			; BUFOM - Draw string as tiles
-K25072:	CMPB	(R3), #074		; room == 60. ?
+K25072:	CMPB	(R3), #074		; room type == $3C ? lift bottom
 	BNE	K25120
-; Room 60. = $3C
+; Room 60. = $3C - lift shaft bottom
 	MOV	#000006, R1		; 6.
 	MOV	#K26660, R2		; " LIFT "
 	MOV	#126700, R3
@@ -2870,8 +2879,8 @@ K31160:	MOVB	R0, 042150
 	MOVB	R0, (R3)+
 	MOVB	R0, (R3)
 K31212:	MOV	<K13332+2>, R3		; get (RM+1)
-	MOVB	(R3), R0
-K31220:	CMPB	R0, #000356		;WARN
+	MOVB	(R3), R0		; get room type
+K31220:	CMPB	R0, #356		;WARN
 	BNE	K31324
 	MOV	#125633, R3
 	MOV	#124533, R2
@@ -2900,21 +2909,21 @@ K31324:	MOVB	L15646, R0		; get RMTIME
 	MOVB	R0, L15646		; set RMTIME
 	JMP	K31712			; => MISGO
 ; NJSTN:
-K31344:	CMPB	K36214, #037		; RMDN == 31. ?
+K31344:	CMPB	K36214, #037		; RMDN == 31. $1F ?
 	BNE	K31360
 	JMP	K31712			; => MISGO
 ; Room level != 31.
 K31360:	MOV	<K13332+2>, R3		; get (RM+1)
-	MOVB	(R3), R0
-	CMPB	R0, #000035		; 29.
+	MOVB	(R3), R0		; get room type
+	CMPB	R0, #035		; 29. $1D
 	BEQ	K31430
-	CMPB	R0, #000043		; 35.
+	CMPB	R0, #043		; 35. $23
 	BEQ	K31430
-	CMPB	R0, #000042		; 34.
+	CMPB	R0, #042		; 34. $22
 	BEQ	K31430
-	CMPB	R0, #000046		; 38.
+	CMPB	R0, #046		; 38. $26
 	BEQ	K31430
-	CMPB	R0, #000052		; 42.
+	CMPB	R0, #052		; 42. $2A
 	BEQ	K31430
 	JMP	K31712			; => MISGO
 ; BATSI:
@@ -3154,13 +3163,15 @@ K32764:	MOVB	R0, 046013
 	CALL	K02202			; DOPIC - Show the room on the screen
 	TSTB	K36216			; check ELECU
 	BEQ	K33052
+; NICK2: Set Ninja to random color, but not blue or green
 K33012:	CALL	K01314			; Get random number
-	BIC	#177770, R0
-	CMPB	R0, #000001
-	BEQ	K33012
-	CMPB	R0, #000004
-	BEQ	K33012
-	MOVB	R0, K03542
+	BIC	#177770, R0		; 0..7
+	CMPB	R0, #001		; == 1 blue ?
+	BEQ	K33012			; yes => again
+	CMPB	R0, #004		; == 4 green ?
+	BEQ	K33012			; yes => again
+	MOVB	R0, K03542		; set (NJCOL+1)
+;
 	MOV	#000024, R1		; 20.
 	CALL	L14472			; DECEN
 ; NICK:
@@ -3585,6 +3596,7 @@ K37614:	MOVB	#005, K37662		; set SPEED = 5
 	MOV	#K36576, R3		; FKIKS -> (VECTN+1)
 	MOV	#047336, R2		; JUMPC -> (CHARN+1)
 	JMP	K55246			; => SETVC - set vectors
+; NJUMP:
 K37636:	BIT	#000020, R0		; bit 4 fire ?
 	BNE	K37614			; => SETFK
 	BIT	#000001, R0		; bit 0 ?
@@ -3594,39 +3606,39 @@ K37656:	JMP	K25276			; => ENDVC
 ;
 K37662:	.WORD	0			; SPEED
 ;
-; TPORT: If time permits, flash L.C.s
+; TPORT: Teleport to room (30.,24.)
 K37664:	CALL	K01612
 	MOVB	#000036, K36215		; set RMAC = 30. room position
 	MOVB	#000030, K36214		; set RMDN = 24. room level
-	MOVB	#005, K36211
+	MOVB	#005, K36211		; set MAND = 5
 	MOVB	#004, K36210		; set MANA = 4
-	MOV	#000244, K36212		; MANPS
+	MOV	#000244, K36212		; set MANPS = 164.
 	MOV	#072230, <K13332+2>	; set (RM+1)
-	MOVB	#002, K03542
+	MOVB	#002, K03542		; set (NJCOL+1) = 2 red
 K37742:	JMP	K13072			; => INISC
 ; RITSC: go one room right
-K37746:	MOV	<K13332+2>, R3
-	CMPB	(R3), #000101
-	BEQ	K37664			; yes => TPORT
+K37746:	MOV	<K13332+2>, R3		; get RM+1
+	CMPB	(R3), #101		; room type == $41 ?
+	BEQ	K37664			; yes => TPORT teleport
 	INCB	K36215			; incr RMAC - one room right
 	MOVB	#000375, K36210		; set MANA = 253.
 	MOV	K36212, R3		; get MANPS
 	SUB	#000040, R3
-	MOV	#000001, R2
+	MOV	#000001, R2		; one room right
 	JMP	K54262			; => PIGGS
 ; LEFSC: go one room left
 K40012:	DECB	K36215			; decr RMAC - one room left
 	MOVB	#000035, K36210		; set MANA = 29.
 	MOV	K36212, R3		; get MANPS
 	ADD	#000040, R3		; +32.
-	MOV	#177777, R2
+	MOV	#177777, R2		; one room left
 	JMP	K54262			; => PIGGS
 ; LEFTP: - Vector for (VECTN+1)
 K40044:	CALL	K36344			; EDGES
 	CALL	K37304			; SLOPQ
 	CALL	K36310			; MOVAC
 	CALL	K41000			; LEGS
-	MOV	#K17200, R3		; BIKER address
+	MOV	#K17200, R3		; BIKER addr
 	MOVB	(R3), R0
 	INCB	R0
 	BEQ	K40230			; => NESCP
@@ -3643,7 +3655,7 @@ K40112:	MOV	#000021, R1		; 17.
 	MOV	#K40205, R2		; " YOU HAVE ESCAPED "
 	MOV	#127273, R3		; address
 	CALL	K04604			; BUFOM - Draw string as tiles
-	MOVB	#000310, K17200		; set BIKER
+	MOVB	#310, K17200		; set BIKER
 	JMP	K55262			; => SETST - end of game
 ;
 K40164:	.ASCII	/@EXCELLENT@VALUE@/
@@ -3684,10 +3696,10 @@ K40356:	MOV	#K40276, 047720
 K40426:	MOV	#K36212, 047720		; MANPS address
 	RETURN
 ; DRBIK procedure
-K40436:	MOV	#K17202, 047720
+K40436:	MOV	#K17202, 047720		; BIKPS addr ->
 	MOV	K36212, R3		; get MANPS
 	ADD	#000076, R3
-	MOV	R3, K17202
+	MOV	R3, K17202		; set BIKPS
 	ADD	R1, R3
 	MOVB	#005, R1
 	MOVB	#000013, K01604
@@ -3747,7 +3759,7 @@ K40742:	DECB	K36214			; decr RMDN room level
 	MOVB	R0, K36211		; set MAND
 	MOV	K36212, R3		; get MANPS
 	ADD	#001100, R3		; + 576.
-	MOV	#177740, R2
+	MOV	#177740, R2		; up one level
 	JMP	K54262			; => PIGGS
 ; LEGS procedure
 K41000:	MOVB	046775, K01602		; room number
@@ -3824,15 +3836,15 @@ K41300:	POP	R1
 ; Input method
 K41304:	.BYTE	0
 ; Key mappings
-K41305:	.BYTE	070, 001, 010
-	.BYTE	062, 002, 004
-	.BYTE	064, 010, 002
-	.BYTE	066, 004, 001
-	.BYTE	065, 001, 020
-	.BYTE	061, 000, 012
-	.BYTE	063, 000, 011
-	.BYTE	067, 000, 024
-	.BYTE	071, 000, 024
+K41305:	.BYTE	070, 001, 010		; '8' - up
+	.BYTE	062, 002, 004		; '2' - down
+	.BYTE	064, 010, 002		; '4' - left
+	.BYTE	066, 004, 001		; '6' - right
+	.BYTE	065, 001, 020		; '5' - fire
+	.BYTE	061, 000, 012		; '1' - up + left
+	.BYTE	063, 000, 011		; '3' - up + right
+	.BYTE	067, 000, 024		; '7' - down + fire
+	.BYTE	071, 000, 024		; '9' - down + fire
 ;
 K41340:	.BYTE	0
 	.EVEN
@@ -4244,10 +4256,10 @@ K52120:	CALL	K52036			; RESTP
 K52152:	MOV	#K54302, R3		; LEP5P -> (VECTN+1)
 	JMP	K55246			; => SETVC - set vectors
 K52162:	MOVB	K17200, R0		; get BIKER
-	CMPB	R0, #000020		; == 16. ?
+	CMPB	R0, #020		; == 16. ?
 K52172:	BNE	K52200
 	JMP	K53066
-K52200:	CMPB	R0, #000310		; == 200. ?
+K52200:	CMPB	R0, #310		; == 200. ?
 	BNE	K52212
 	JMP	L14674			; yes => COMPL
 K52212:	CALL	K41176			; KEY
@@ -4264,11 +4276,11 @@ K52244:	MOV	K36212, R3		; get MANPS
 	CMPB	(R3), #000212		; == 138. ?
 	BEQ	K52266
 	JMP	K52772			; no => NCONU
-; LIFTSWAP or FENSWAP or CODEROP
+; Console: check for LIFTSWAP or FENSWAP or CODEROP
 K52266:	MOV	<K13332+2>, R3		; get (RM+1)
-	CMPB	(R3), #000075		; == 61. ?
+	CMPB	(R3), #075		; room type == $3D ?
 	BEQ	K52446			; yes => K2DAQ
-	CMPB	(R3), #000115		; == 77. ?
+	CMPB	(R3), #115		; room type == $4D ?
 	BEQ	K52402			; yes => KODAQ
 	NOP2
 ; NSEEC:
@@ -4287,28 +4299,29 @@ K52362:	MOV	#000016, R1		; 14.
 	MOV	#050146, R2		; screen address
 	CALL	K01704			; PRINT string
 	JMP	K25276
-K52402:	MOVB	013226, R0
+; KODAQ: Console, room type == $4D - room right to rocket
+K52402:	MOVB	013226, R0		; get (DRFNT+1)
 	INCB	R0
 	BEQ	K52312
-	MOV	#031222, R3
+	MOV	#031222, R3		; FENRM+1
 	MOVB	(R3), R5
-	MOV	#000021, R0
+	MOV	#000021, R0		; 17.
 	XOR	R0, R5
-	MOVB	R5, (R3)
+	MOVB	R5, (R3)		; set (FENRM+1)
 	MOV	#K52754, R3		; " FENCE IS OFF "
 	INCB	R5
 	BEQ	K52362			; => BUTCR
 	MOV	#K52736, R3		; "  FENCE IS ON "
 	BR	K52362			; => BUTCR
-; K2DAQ:
+; K2DAQ: Console, room type == $3D - room left to rocket
 K52446:	MOV	#050146, R2
 	MOV	#000016, R1		; 14.
-	MOV	#K51145, R3		; TAPCT address
+	MOV	#K51145, R3		; TAPCT addr
 	MOVB	K51146, R0		; get TAPTT
 	BEQ	K52472			; 0 => KINTE
-	MOVB	R0, (R3)		; set TAPCT
+	MOVB	R0, (R3)		; TAPTT -> TAPCT
 ; KINTE
-K52472:	MOVB	(R3), R0
+K52472:	MOVB	(R3), R0		; get TAPCT
 	BEQ	K52576			; 0 => KODNA
 	CMPB	K52626, (R3)		; get NTPND - tapes needed
 	BHIS	K52612			; => KDNTA
@@ -4577,10 +4590,11 @@ K54226:	MOV	#K36214, R3		; RMDN addr
 	MOVB	R0, K36211
 	MOV	K36212, R3		; get MANPS
 	SUB	#001040, R3
-	MOV	#000040, R2
+	MOV	#000040, R2		; down one level for (RM+1)
+; PIGGS:
 K54262:	MOV	R3, K36212		; set MANPS
-	ADD	R2, <K13332+2>
-	CLRB	K03542			; clear (NJCOL+1)
+	ADD	R2, <K13332+2>		; (RM+1) += R2
+	CLRB	K03542			; set (NJCOL+1) = 0 black
 	JMP	K13072			; => INISC
 ; LEP5P:
 K54302:	CALL	K54212			; OFBOT
@@ -5382,14 +5396,14 @@ L13115:	.ASCII	/UP   /
 ; Keyboard selected in Menu
 L13146:	CALL	L13424			; NOCOL Clear Menu selection
 	MOV	#054202, R3
-	CLR	R0
+	CLR	R0			; input method = 0
 ;NOTE: Protek убран - не нужно на БК
 L13176:	CALL	L13464			; SETCOL Show Menu selection
 	JMP	L11464			; Continue to Menu
 ; Kempston selected
 L13206:	CALL	L13424			; NOCOL Clear Menu selection
 	MOV	#054402, R3
-	MOV	#000001, R0
+	MOV	#000001, R0		; input method = 1
 	BR	L13176			; Show Menu selection and Continue to Menu
 ;
 ; Procedure: Calculate screen attr address and set attributes for 8x8 block
@@ -5450,8 +5464,8 @@ L13444:	PUSH	R2			; <
 	INC	R2			; |
 	SOB	R1, L13444		; repeat
 	RETURN
-; SETCOL procedure: Show Menu selection
-L13464:	MOVB	R0, 041304		; Save input method selection
+; SETCOL procedure: Show Menu selection; R0 = input method
+L13464:	MOVB	R0, K41304		; Save input method selection
 	MOV	R3, <L13430+2>
 ; INICL:
 L13474:	MOV	#000061, R0		; attribute
