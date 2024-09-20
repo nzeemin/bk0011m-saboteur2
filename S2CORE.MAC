@@ -201,8 +201,8 @@ K02106:	BISB	R2, <K02070+2>
 	RETURN
 ;
 ; DOPIC procedure: Show the room on the screen
-K02202:	MOV	#041173, R3		; FFCOL
-	MOVB	(R3), R5
+K02202:	MOV	#K41173, R3		; FFCOL
+	MOVB	(R3), R5		; get FFCOL
 	MOV	#000004, R0
 	XOR	R0, R5			; XOR 4
 	MOVB	R5, (R3)+
@@ -255,8 +255,8 @@ K02374:	MOVB	(R3)+, (R2)+
 K02426:	BLO	K02450			; => FFCL2
 	CMPB	R0, #000247		; == 167. ?
 	BHIS	K02450			; => FFCL2
-	MOVB	041173, R0
-	MOVB	R0, K41174
+	MOVB	K41173, R0		; get FFCOL
+	MOVB	R0, K41174		; set (FFCOL+1)
 	MOV	R0, R1
 ; FFCL2:
 K02450:	BICB	#177407, K04672		; COL
@@ -270,75 +270,75 @@ K02450:	BICB	#177407, K04672		; COL
 	CALL	K36042			; G1DIS
 	MOVB	(R3), R1
 	MOVB	007126(R1), R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
 	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
 	MOVB	007126(R1), R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
 	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
 	MOVB	007126(R1), R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
 	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
 	MOVB	007126(R1), R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
 	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
 	MOVB	007126(R1), R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
 	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
 	MOVB	007126(R1), R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
 	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
 	MOVB	007126(R1), R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
 	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
 	MOVB	007126(R1), R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
 	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	CALL	K36042			; G1DIS
 K03014:	MOVB	@K04660, R0		; get tile from Enemy 1 tile screen
@@ -355,75 +355,75 @@ K03014:	MOVB	@K04660, R0		; get tile from Enemy 1 tile screen
 	CALL	K36056			; G2DIS
 	MOVB	(R3), R1
 	MOVB	007126(R1), R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
 	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
 	MOVB	007126(R1), R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
 	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
 	MOVB	007126(R1), R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
 	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
 	MOVB	007126(R1), R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
 	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
 	MOVB	007126(R1), R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
 	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
 	MOVB	007126(R1), R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
 	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
 	MOVB	007126(R1), R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
 	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
 	MOVB	007126(R1), R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
 	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	CALL	K36056			; G2DIS
 ; NINJA:
@@ -480,75 +480,75 @@ K03560:	MOVB	K41175, K03542		; restore TMPNC -> NJCOL+1
 	MOV	#K04662, R2		; PIX
 	MOVB	(R3), R1
 	MOVB	007126(R1), R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
 	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
 	MOVB	007126(R1), R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
 	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
 	MOVB	007126(R1), R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
 	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
 	MOVB	007126(R1), R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
 	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
 	MOVB	007126(R1), R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
 	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
 	MOVB	007126(R1), R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
 	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
 	MOVB	007126(R1), R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
 	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
 	MOVB	007126(R1), R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
 	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - refleft R0 if DIR
+	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 ;
 K04104:	MOV	#K04672, R3		; get COL
@@ -557,96 +557,90 @@ K04104:	MOV	#K04672, R3		; get COL
 K04114:	NOP		;!!MUT-CMD!! "NOP" command or "MOVB R0,(R3)" command
 	MOVB	@K04654, R0		; get tile from Front tile screen
 	CLR	R3
-	BISB	R0, R3
-	INCB	R0
-	BEQ	K04274			; => DRAW
+	BISB	R0, R3			; get byte
+	INCB	R0			; == 255. ?
+	BEQ	K04274			; yes => DRAW
 	MOV	R3, R1
 	ASL	R3
 	ASL	R3
 	ASL	R3			; *8.
-	CMPB	R0, #000345		; == 229.?
+	CMPB	R0, #000345		; compare to 229.
 	BHIS	K04526			; => BUFWR
 	ASL	R3
-	ADD	R1, R3
-	ADD	#041342, R3		; + OCHRS
+	ADD	R1, R3			; *17.
+	ADD	#K41342, R3		; + OCHRS
 	MOV	#K04662, R2		; PIX
 	MOVB	(R3)+, R0
 	COMB	R0
 	BICB	R0, (R2)
-	BISB	(R3)+, (R2)+
+	BISB	(R3)+, (R2)+		; #0
 	MOVB	(R3)+, R0
 	COMB	R0
 	BICB	R0, (R2)
-	BISB	(R3)+, (R2)+
+	BISB	(R3)+, (R2)+		; #1
 	MOVB	(R3)+, R0
 	COMB	R0
 	BICB	R0, (R2)
-	BISB	(R3)+, (R2)+
+	BISB	(R3)+, (R2)+		; #2
 	MOVB	(R3)+, R0
 	COMB	R0
 	BICB	R0, (R2)
-	BISB	(R3)+, (R2)+
+	BISB	(R3)+, (R2)+		; #3
 	MOVB	(R3)+, R0
 	COMB	R0
 	BICB	R0, (R2)
-	BISB	(R3)+, (R2)+
+	BISB	(R3)+, (R2)+		; #4
 	MOVB	(R3)+, R0
 	COMB	R0
 	BICB	R0, (R2)
-	BISB	(R3)+, (R2)+
+	BISB	(R3)+, (R2)+		; #5
 	MOVB	(R3)+, R0
 	COMB	R0
 	BICB	R0, (R2)
-	BISB	(R3)+, (R2)+
+	BISB	(R3)+, (R2)+		; #6
 	MOVB	(R3)+, R0
 	COMB	R0
 	BICB	R0, (R2)
-	BISB	(R3)+, (R2)+
+	BISB	(R3)+, (R2)+		; #7
 	CMPB	(R3), #377		; == 255. ?
 	BEQ	K04274			; => DRAW
 	MOVB	(R3), (R2)
 ; DRAW: Copy pixels from K04662 to screen; R5 = address on screen
 K04274:	MOV	#K04662, R3		; PIX
-	PUSH	R5
-	MOV	#100, R1		; offset to next line
+	;PUSH	R5
+	;MOV	#100, R1		; offset to next line
 	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
 	MOVB	(R3)+, R0		; #0
 	ASL	R0
 	MOV	PXCONH(R0), (R5)
-	ADD	R1, R5
 	MOVB	(R3)+, R0		; #1
 	ASL	R0
-	MOV	PXCONH(R0), (R5)
-	ADD	R1, R5
+	MOV	PXCONH(R0), 000100(R5)
 	MOVB	(R3)+, R0		; #2
 	ASL	R0
-	MOV	PXCONH(R0), (R5)
-	ADD	R1, R5
+	MOV	PXCONH(R0), 000200(R5)
 	MOVB	(R3)+, R0		; #3
 	ASL	R0
-	MOV	PXCONH(R0), (R5)
-	ADD	R1, R5
-	;TODO: Копировать и этот байт тоже
-	CLR	(R5)			; Пустая строка в середине тайла
-	ADD	R1, R5
+	MOV	PXCONH(R0), R0
+	MOV	R0, 000300(R5)
+	MOV	R0, 000400(R5)		; Дублируем строку в середине тайла
 	MOVB	(R3)+, R0		; #4
 	ASL	R0
-	MOV	PXCONH(R0), (R5)
-	ADD	R1, R5
+	MOV	PXCONH(R0), 000500(R5)
 	MOVB	(R3)+, R0		; #5
 	ASL	R0
-	MOV	PXCONH(R0), (R5)
-	ADD	R1, R5
+	MOV	PXCONH(R0), 000600(R5)
 	MOVB	(R3)+, R0		; #6
 	ASL	R0
-	MOV	PXCONH(R0), (R5)
-	ADD	R1, R5
+	MOV	PXCONH(R0), 000700(R5)
 	MOVB	(R3)+, R0		; #7
 	ASL	R0
-	MOV	PXCONH(R0), (R5)
+	MOV	PXCONH(R0), R0
+	MOV	R0, 001000(R5)
+	MOV	R0, 001100(R5)		; Дублируем нижнюю строку тайла
 	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
-	MOVB	(R3), R0		; get attr
-	POP	R5
+	;MOVB	(R3), R0		; get attr
+	;POP	R5
 K04440:	TST	(R5)+			; next column
 	INC	K04652			; next address in Ninja tile screen
 	INC	K04656			; next address in Enemy 0 tile screen
@@ -660,17 +654,17 @@ K04440:	TST	(R5)+			; next column
 	INC	R4
 	DEC	R1
 	BEQ	K04506
-	JMP	K02304
+	JMP	K02304			; => LOOP2
 K04506:	ADD	#001100, R5
 	DEC	<K02272+4>
-	BEQ	K04632		; Переход на RETURN
-	JMP	K02300
+	BEQ	K04632			; Z => RETURN
+	JMP	K02300			; => LOOP1
+; BUFWR:
 K04526:	ADD	#112754, R3		; ??? some base address
-	CMPB	R0, #000345		; 229.
-	BNE	K04544			; => NOEL6
+	CMPB	R0, #000345		; == 229. ?
+	BNE	K04544			; no => NOEL6
 	MOV	#L16014, R3		; CHARSET - computerized font base address
 K04544:	MOV	#K04662, R2		; PIX
-	MOV	#000010, R1		; 8.
 	MOVB	(R3)+, (R2)+
 	MOVB	(R3)+, (R2)+
 	MOVB	(R3)+, (R2)+
@@ -681,6 +675,7 @@ K04544:	MOV	#K04662, R2		; PIX
 	MOVB	(R3)+, (R2)+
 	;MOVB	#060, (R2)		;NOTE: Атрибут, не нужно на БК
 	BR	K04274			; => DRAW
+	NOP3
 ;
 ; BUFOM procedure: Draw string as tiles; R2 = string, R1 = length
 K04604:	MOV	R1, R5
@@ -705,7 +700,7 @@ K04654:	.WORD	0			; OBJPT: Address in Front tile screen
 K04656:	.WORD	0			; GD1PT: Address in Enemy 0 tile screen
 K04660:	.WORD	0			; GD2PT: Address in Enemy 1 tile screen
 ;
-K04662:	.BLKW	4			; PIX
+K04662:	.BLKB	10			; PIX
 ;
 K04672:	.BYTE	2			; COL
 K04673:	.BYTE	0			; BAKCR
@@ -986,7 +981,7 @@ K11216:
 		;DECB	R0		; input method == 2 ?
 		;BEQ	K11422
 	MOV	#L15775, R2		; Redefined keys address
-K11422:	MOV	#K41305, R3
+K11422:	MOV	#K41305, R3		; key mappings table
 	MOV	#000017, R1		; 15. bytes
 K11432:	MOVB	(R2)+, (R3)+		; < copy byte
 	SOB	R1, K11432		; repeat
@@ -3709,7 +3704,7 @@ K40436:	MOV	#K17202, 047720		; BIKPS addr ->
 	CALL	K47660			; DRWOB
 	BR	K40426
 ;
-K40520:	CMPB	K36210, #000375		; MANA == 253. ?
+K40520:	CMPB	K36210, #375		; MANA == 253. ?
 	BNE	K40534
 	JMP	K40012
 K40534:	CALL	K36310			; MOVAC
@@ -3724,15 +3719,15 @@ K40564:	MOVB	#001, R0
 ;
 K40574:	.WORD	0
 ; BIKEP: ??? - Vector for (VECTN+1)
-K40576:	CMPB	K36210, #000375		; MANA == 253. ?
+K40576:	CMPB	K36210, #375		; MANA == 253. ?
 	BNE	K40612
 	JMP	K40012
 K40612:	CALL	K36310			; MOVAC
-	RORB	040574
+	RORB	K40574
 	BHIS	K40626
 	.WORD	005727	;TST #000261	; XOR 1
 K40626:	SEC
-	ROLB	040574
+	ROLB	K40574
 	BNE	K40576
 	MOV	#K17273, R2		; ??? 11x5 tiles
 	MOV	#L26524, R1		; BUFFO Front tile screen address
@@ -3766,19 +3761,19 @@ K41000:	MOVB	046775, K01602		; room number
 	MOV	#000233, R0
 	XOR	R0, K01602
 	MOVB	K01602, 046775		; room number
-	ADD	#000022, 041152		; + 18.
-	MOVB	041172, R0
+	ADD	#000022, <K41150+2>	; + 18.
+	MOVB	K41172, R0		; get LEGP
 	INCB	R0
 	CMPB	R0, #004		; == 4 ?
 	BNE	K41144
-	MOV	#047030, 041152
+	MOV	#047030, <K41150+2>
 	MOV	#000001, R5		; sound duration = 1
 	CMPB	050164, #000376
 	BEQ	K41074
 	MOV	#000012, R5		; sound duration = 10.
 ; Sound
-K41074:	MOV	#220, R0		; значение для порта 177716 БК
-	MOV	#100, R2		; бит звука
+K41074:	CLR	R0			; < значение для порта 177716 БК
+	MOV	#100, R2		;   бит звука
 K41100:	XOR	R2, R0
 	MOV	R0, @#177716
 	XOR	R2, R0
@@ -3789,37 +3784,37 @@ K41100:	XOR	R2, R0
 	XOR	R2, R0
 	MOV	R0, @#177716
 	SOB	R5, K41074		; repeat
-	NOP2
+	NOP3
 ;
-K41144:	MOVB	R0, 041172
-	MOV	#000000, R3
+K41144:	MOVB	R0, K41172		; set LEGP
+K41150:	MOV	#000000, R3		;!!MUT-ARG!!
 	MOV	#047006, R2
-	MOV	#000022, R1
-K41164:	MOVB	(R3)+, (R2)+
+	MOV	#000022, R1		; 18.
+K41164:	MOVB	(R3)+, (R2)+		; <
 	SOB	R1, K41164		; repeat
 	RETURN
 ;
-K41172:	.WORD	001000
-K41174:	.BYTE	0			; NJCOL+1
+K41172:	.BYTE	0			; LEGS
+K41173:	.BYTE	0			; FFCOL
+K41174:	.BYTE	0			; FFCOL+1
 K41175:	.BYTE	0			; TMPNC
 ;
 ; KEY procedure: Check if we have a key pressed, and do keymapping
-K41176:	NOP2	;MTPS	#000340			; disable interrupts
+K41176:
 	PUSH	R3
 	MOV	#K41304, R3
 	MOVB	(R3)+, R0		; get input method; R3 = K41305
-	DECB	R0
-	BR	K41232
-;
-K41216:	MOVB	R0, 041340
-	POP	R3
-	NOP2	;MTPS	#000000			; enable interrupts
-	RETURN
+	BEQ	K41232			; == 0 => process keyboard
+;TODO: read BK joystick and process it
+	MOVB	@#177714, R0
+	NOP2
+	NOP2
+	NOP1
+	BR	K41216
 ; If we have a key pressed, go through key mapping table
 K41232:	PUSH	R1
 	TSTB	@#177660	;БК	; do we have an unprocessed key?
 	BPL	K41276		;БК	; no => jump
-	NOP2	;CLR	001402			; mark as processed
 	MOVB	@#177662, R0	;БК	; get the key
 	MOV	#000011, R1		; 9.
 K41256:	CMPB	(R3)+, R0		; <  matches the key?
@@ -3831,7 +3826,17 @@ K41270:	ADD	#000002, R3		; |  to next key probe
 	SOB	R1, K41256		; repeat
 K41276:	CLR	R0			; not found - result is empty
 K41300:	POP	R1
-	BR	K41216
+K41216:	MOVB	R0, 041340
+	POP	R3
+	RETURN
+;
+; BK Joystick - port 177714
+;  7   6   5   4   3   2   1   0
+;  B  Fr2  Fr  A   Lt  Dn  Rt  Up
+;
+; Game controls
+;  7   6   5   4   3   2   1   0
+;              Fr  Up  Dn  Lt  Rt
 ;
 ; Input method
 K41304:	.BYTE	0
@@ -3846,7 +3851,7 @@ K41305:	.BYTE	070, 001, 010		; '8' - up
 	.BYTE	067, 000, 024		; '7' - down + fire
 	.BYTE	071, 000, 024		; '9' - down + fire
 ;
-K41340:	.BYTE	0
+K41340:	.BYTE	0			; Saved read controls
 	.EVEN
 ;
 ;K41342:
@@ -4493,12 +4498,12 @@ K53542:	CMPB	R0, #005		; == 5. ?
 K53606:	JMP	K25276			; => ENDVC
 ; SETLG procedure
 K53612:	MOV	#047030, R3		; LEG1 address
-	MOV	R3, 041152
+	MOV	R3, <K41150+2>
 	MOV	#047006, R2
 	MOV	#000022, R1		; 18.
 K53632:	MOVB	(R3)+, (R2)+		; <
 	SOB	R1, K53632		; repeat
-	CLRB	041172			; set LEGP = 0
+	CLRB	K41172			; set LEGP = 0
 	RETURN
 	NOP1
 ; LADDP:
@@ -5711,7 +5716,7 @@ L15650:	MOV	#000144, R1		; 100.
 	MOV	R0, R3
 	SWAB	R3
 ; Sound
-	MOV	#220, R0		; значение для порта 177716 БК
+	CLR	R0			; значение для порта 177716 БК
 	MOV	#100, R2		; бит звука
 L15674:	XOR	R2, R0
 	MOV	R0, @#177716
@@ -5725,7 +5730,7 @@ L15722:	DECB	K01604
 	RETURN
 	NOP3
 	NOP3
-	NOP1
+	NOP2
 ;
 L15756:
 	.BYTE	070,001,010, 062,002,004, 064,010,002
