@@ -54,7 +54,7 @@ set "codesize=%codesize:~49,5%"
 rem echo Code limit %codesize% words
 set /a codesize="%codesize% * 2"
 powershell gc S2CORE.SAV -Encoding byte -TotalCount %codesize% ^| sc S2CORE.CO0 -Encoding byte
-set /a codesize="%codesize% - 712"
+set /a codesize="%codesize% - 768"
 powershell gc S2CORE.CO0 -Encoding byte -Tail %codesize% ^| sc S2CORE.COD -Encoding byte
 del S2CORE.CO0
 rem echo Code size %codesize% bytes

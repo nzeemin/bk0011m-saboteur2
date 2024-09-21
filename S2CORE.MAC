@@ -33,44 +33,48 @@ MMOD34 = ^B0011110000000000	; 3:4  -  для загрузки
 MMODE1 = ^B0011100000000000	; 3:1  -  основной
 MMODE5 = ^B0001100000000000	; 5:1  -  для рисования на экране at 040000-077777 window
 
-	.=001310
-
+	.=001400
 ; Приходим сюда из загрузчика
 ; Уже включен основной режим памяти MMODE1
 K01000:	MTPS	#000340			; Disable interrupts
-;	MOV	SP, OSTACK		; Сохраняем начальное значение SP
-	MOV	#1000, SP
-;	MOV	#1330, @#177664		; Устанавливаем стандартное значение скролла
-;	MOV	#MMODE1, @#177716	; Включаем основной режим памяти
+	MOV	SP, OSTACK		; Сохраняем начальное значение SP
+	MOV	#000004, R0
+	MOV	#STOP, (R0)+		; Вектор обработки клавиши СТОП
+	MOV	#340, (R0)
+; Сюда переходим по нажатию клавиши СТОП
+STOP:	MOV	#1000, SP
+	MOV	#1330, @#177664		; Устанавливаем стандартное значение скролла
+	MOV	#MMODE1, @#177716	; Включаем основной режим памяти
 K01220:	JMP	START
-
-	.BLKW	24	;NOTE: Свободное место
 ;
-; Clear 1024.*8.*2. = 16K bytes on the screen
-K01224:	MOV	#000000, R0		; Filler value  !!MUT-ARG!!
-	MOV	#002000, R1		; 1024.
-	MOV	#040000, R5		; Screen start address
-	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
-K01254:	MOV	R0, (R5)+		; <  #0
-	MOV	R0, (R5)+		; |  #1
-	MOV	R0, (R5)+		; |  #2
-	MOV	R0, (R5)+		; |  #3
-	MOV	R0, (R5)+		; |  #4
-	MOV	R0, (R5)+		; |  #5
-	MOV	R0, (R5)+		; |  #6
-	MOV	R0, (R5)+		; |  #7
-	SOB	R1, K01254		; repeat
-	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
-	RETURN
+OSTACK:	.WORD	01000			; Сохраняем начальное значение SP
 ;
-; Procedure: Get random number
-;NOTE: Пока убрал для БК
-K01314:	RETURN
+	.BLKW	5
 ;
 ; Interrupt 130 handler
 ;NOTE: Убрал для БК
-
-; Procedure: ??
+;
+; Procedure: Get random number
+;NOTE: Пока убрал для БК
+;TODO
+K01314:	RETURN
+	.BLKW	32
+;
+.IIF	NE <.-001552>, ERRORA
+K01552:	.BLKW	5
+K01572:	.BLKW	7
+K01602:	.WORD	0
+K01604:	.WORD	0			; temp variable
+K01606:	.BYTE	0
+K01607:	.BYTE	0
+K01610:	.WORD	0			; offset value in room marker processing
+K01611	=	K01610+1
+;
+; Procedure ?? fill screen attrs?? (the only use on TPORT)
+;NOTE: Эту процедуру убрал на БК
+;K01612:
+;
+; Procedure: EXX
 K01434:	PUSH	R4
 	MOV	#K01552, R4
 	TST	(R4)
@@ -93,72 +97,53 @@ K01470:	ADD	#000014, R4		; + 12.
 	MOV	-(R4), R1
 	CLR	-(R4)
 	BR	K01464
+; ??? не используется?
+;K01514:	PUSH	R4
+;	MOV	#K01572, R4
+;	TST	(R4)
+;	BNE	K01540
+;	MOV	SP, (R4)+
+;	MOV	R0, (R4)+
+;	MOV	(R4), R0
+;K01534:	POP	R4
+;	RETURN
+;K01540:	CLR	(R4)+
+;	TST	(R4)+
+;	MOV	R0, (R4)
+;	MOV	-(R4), R0
+;	BR	K01534
 ;
-K01514:	PUSH	R4
-	MOV	#K01572, R4
-	TST	(R4)
-	BNE	K01540
-	MOV	SP, (R4)+
-	MOV	R0, (R4)+
-	MOV	(R4), R0
-K01534:	POP	R4
-	RETURN
-K01540:	CLR	(R4)+
-	TST	(R4)+
-	MOV	R0, (R4)
-	MOV	-(R4), R0
-	BR	K01534
-;
-K01552:	.BLKW	5
-K01572:	.BLKW	7
-K01602:	.WORD	0
-K01604:	.WORD	0			; temp variable
-K01606:	.WORD	0
-K01610:	.WORD	0			; offset value in room marker processing
-K01611	=	K01610+1
-;
-; Procedure ?? fill screen attrs??
-K01612:	PUSH	R5
-	MOV	#040001, R3		; screen address
-	MOV	#000022, R1		; 18. rows
-	MOV	#177777, R2
-	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
-K01644:	MOV	#000040, R5		; < 32.
-K01650:	MOVB	R2, (R3)+		; | <
-	INC	R3			; | |
-	SOB	R5, K01650		; | repeat
-	NOP2	;ADD	#000020, R3
-	SOB	R1, K01644		; repeat
-	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
-	POP	R5
-	RETURN
+	.BLKW	3	;NOTE: Свободное место
 ;
 ; PRINT procedure: Print string R3, R1 = length, R2 = screen coords
 K01704:	PUSH	R2
 	PUSH	R4
 	PUSH	R5
 	CALL	K02056			; screen coords R2 to screen address
-K01716:	MOVB	(R3)+, R0		; <  get symbol
-	BIC	#177400, R0
+K01716:	CLR	R0
+	BISB	(R3)+, R0		; <  get symbol
 	ASL	R0
 	ASL	R0
 	ASL	R0			; *8.
-	ADD	#<L06234-256.>, R0	; + font base address minus 256. for 32. symbols
+	ADD	#<L06234-256.>, R0	; + font base addr minus 256. for 32. symbols
 	PUSH	R2
 	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
 	PUSH	R1
+	CLR	(R2)			; Очищаем верхнюю строку
+	ADD	#000100, R2		; next line
 	MOVB	#000010, R5		; 8. lines
 K01760:	MOVB	(R0)+, R1		; <
 	ASL	R1
 	MOV	PXCONH(R1), (R2)	; |  copy to screen
 	ADD	#000100, R2		; |  next line
 	SOB	R5, K01760		; repeat
+	CLR	(R2)			; Очищаем нижнюю строку
 	POP	R1
 	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
 	POP	R2
-K02006:	ADD	#000001, R4
-	CMPB	#000040, <K02006+2>
-	BNE	K02030
+K02006:	ADD	#000001, R4		;!!MUT-ARG!! shift 1. or 32.
+	CMPB	#000040, <K02006+2>	; vertical text?
+	BNE	K02030			; no =>
 	ADD	#001200, R2
 	BR	K02032
 K02030:	TST	(R2)+
@@ -197,7 +182,7 @@ K02106:	BISB	R2, <K02070+2>
 	ADD	#040000, R2		; R2 = screen address
 	ASR	R4
 	RETURN
-	MOV	#000001, R0
+K02176:	MOV	#000001, R0		;TODO: not used??
 	RETURN
 ;
 ; DOPIC procedure: Show the room on the screen
@@ -1030,44 +1015,42 @@ K11600:	PUSH	R3			;   <
 K11626:	SOB	R1, K11600		;   repeat
 	BR	K11516			; repeat
 ; Procedure: Show one tile of the indicator panel
-K11632:	PUSH	R2
+K11632:	;PUSH	R2
 	PUSH	R5
 	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
 	MOVB	(R3)+, R5		; #0
 	ASL	R5
-	MOV	PXCONH(R5), (R2)
-	ADD	#00100, R2
+	MOV	PXCONH(R5), R5
+	MOV	R5, (R2)
+	MOV	R5, 000100(R2)		; Дублируем первую строку тайла
 	MOVB	(R3)+, R5		; #1
 	ASL	R5
-	MOV	PXCONH(R5), (R2)
-	ADD	#00100, R2
+	MOV	PXCONH(R5), 000200(R2)
 	MOVB	(R3)+, R5		; #2
 	ASL	R5
-	MOV	PXCONH(R5), (R2)
-	ADD	#00100, R2
+	MOV	PXCONH(R5), 000300(R2)
 	MOVB	(R3)+, R5		; #3
 	ASL	R5
-	MOV	PXCONH(R5), (R2)
-	ADD	#00100, R2
+	MOV	PXCONH(R5), 000400(R2)
 	MOVB	(R3)+, R5		; #4
 	ASL	R5
-	MOV	PXCONH(R5), (R2)
-	ADD	#00100, R2
+	MOV	PXCONH(R5), 000500(R2)
 	MOVB	(R3)+, R5		; #5
 	ASL	R5
-	MOV	PXCONH(R5), (R2)
-	ADD	#00100, R2
+	MOV	PXCONH(R5), 000600(R2)
 	MOVB	(R3)+, R5		; #6
 	ASL	R5
-	MOV	PXCONH(R5), (R2)
-	ADD	#00100, R2
+	MOV	PXCONH(R5), 000700(R2)
 	MOVB	(R3)+, R5		; #7
 	ASL	R5
-	MOV	PXCONH(R5), (R2)
+	MOV	PXCONH(R5), R5
+	MOV	R5, 001000(R2)
+	MOV	R5, 001100(R2)		; Дублируем последнюю строку тайла
 	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
 	POP	R5
-	POP	R2
+	;POP	R2
 K11766:	RETURN
+	NOP3
 ;
 K11770:	.WORD	000			; CONQU
 ;
@@ -1872,7 +1855,7 @@ K20004:	MOV	R0, (R3)+		; < fill 2 tiles
 K20022:	POP	R3
 	MOVB	(R3)+, R0
 	MOVB	(R3)+, K01606
-	MOVB	(R3), 001607
+	MOVB	(R3), K01607
 	PUSH	R3
 	MOV	K01606, R3
 	ADD	#K43310, R3		; + base address tiles for current room
@@ -1882,7 +1865,7 @@ K20022:	POP	R3
 K20056:	MOV	#000312, R0
 	POP	R3
 	MOVB	(R3)+, K01606
-	MOVB	(R3), 001607
+	MOVB	(R3), K01607
 	PUSH	R3
 	MOV	K01606, R3
 	ADD	#K43310, R3		; + base address tiles for current room
@@ -1957,7 +1940,7 @@ K20364:	POP	R3
 	BISB	(R3)+, R0		; get Supertile number
 	PUSH	R3
 	PUSH	R2
-	CALL	K01434
+	CALL	K01434			; EXX
 	ASL	R0			; *2
 	MOV	K20466(R0), R3		; get Supertile address from the table
 	POP	R2
@@ -1967,8 +1950,8 @@ K20422:	MOVB	(R3)+, (R2)+		;   <  copy tile number
 	SOB	R5, K20422		;   repeat
 	ADD	#000030, R2		;   next line
 	SOB	R1, K20416		; repeat
-	CALL	K01434
-	ADD	#000010, R2
+	CALL	K01434			; EXX
+	ADD	#000010, R2		; + 8.
 	DECB	K01604
 	BNE	K20364
 	ADD	#000240, R2
@@ -2150,17 +2133,17 @@ K24616:	.WORD	177777	;???
 ; LETP2:
 K24620:	DECB	R0
 	BNE	K24662
-	MOV	#000040, 002010
+	MOV	#000040, <K02006+2>	; 32. - vertical text
 	MOV	#K17666, R3		; "OLONEL BRIGGSY  EXPLORER"
 	MOV	#040023, R2
 	MOV	#000022, R1		; 18.
 ; KOON3:
 K24646:	CALL	K01704			; PRINT string
-	MOV	#000001, 002010
+	MOV	#000001, <K02006+2>	; 1. - horizontal text
 	BR	K24764			; => NXMAN
 K24662:	DECB	R0
 	BNE	K24764			; => NXMAN
-	MOV	#000040, 002010
+	MOV	#000040, <K02006+2>	; 32. - vertical text
 	MOV	#017710, R3
 	MOV	#040023, R2
 	MOV	#000006, R1
@@ -2343,13 +2326,13 @@ K25746:	MOVB	000001(R4), R1
 	MOVB	000004(R4), K01611
 	MOVB	000003(R4), K01610
 	MOV	K01610, R3
-	MOVB	#177777, 001607
+	MOVB	#177777, K01607
 	TSTB	(R4)
 	BPL	K26060
 	CALL	K01314			; Get random number
 	BIC	#177774, R0		; 0..3
 	BEQ	K26060
-	INCB	001607
+	INCB	K01607
 	MOVB	000001(R4), R0
 	ADD	#000012, R0
 	MOVB	R0, K01606
@@ -2357,7 +2340,7 @@ K25746:	MOVB	000001(R4), R1
 	ADD	#000012, R0
 	CMPB	R0, K01606
 	BHIS	K26060
-	INCB	001607
+	INCB	K01607
 ; GTRO2:
 K26060:	TSTB	K36264			; check DIR
 	BEQ	K26210
@@ -2366,7 +2349,7 @@ K26060:	TSTB	K36264			; check DIR
 	CMPB	000006(R4), R1
 	BNE	K26160
 ; STFFQ:
-K26104:	DECB	001607
+K26104:	DECB	K01607
 	BEQ	K26132
 	MOVB	000013(R4), R0
 	ASL	R0
@@ -2395,7 +2378,7 @@ K26210:	CMPB	000002(R4), 000007(R4)
 	BNE	K26236
 	CMPB	000010(R4), R1
 	BNE	K26236
-	INCB	001607
+	INCB	K01607
 	JMP	K26104
 ; KONT2:
 K26236:	INCB	R1
@@ -2500,7 +2483,7 @@ K26720:	MOV	#127771, R3		; BUFFN+101
 	BEQ	K26734
 	MOV	#127764, R3
 K26734:	MOVB	000003(R4), K01606
-	MOVB	000004(R4), 001607
+	MOVB	000004(R4), K01607
 	ADD	K01606, R3
 	MOVB	050137, R0
 	INCB	R0
@@ -2554,7 +2537,7 @@ K27136:	MOV	#K36211, R3		; MAND
 	ADD	#000144, R3
 	MOVB	#004, 001605
 	MOVB	#000010, K01604
-	CLRB	001607
+	CLRB	K01607
 	MOVB	000001(R4), R0
 	ADD	#000012, R0
 	MOVB	R0, K01606
@@ -2564,13 +2547,13 @@ K27136:	MOV	#K36211, R3		; MAND
 	BHIS	K27316
 	MOVB	#001, 001605
 	MOVB	#004, K01604
-	MOVB	#001, 001607
+	MOVB	#001, K01607
 	DEC	R3
 	DEC	R3
 	DEC	R3
 ; GTROK:
 K27316:	MOVB	K36264, R0		; get DIR
-	CMPB	R0, 001607
+	CMPB	R0, K01607
 	BNE	K27454
 	MOVB	000001(R4), R0
 	MOVB	001605, K36202
@@ -2604,7 +2587,7 @@ K27504:	MOVB	050127, R0
 	INCB	R0
 	BEQ	K27552
 	MOVB	000003(R4), K01606
-	MOVB	000004(R4), 001607
+	MOVB	000004(R4), K01607
 	ADD	K01606, R3
 	MOVB	(R3), R0
 	INCB	R0
@@ -2785,7 +2768,7 @@ K30540:	MOV	#000007, R1
 	MOVB	030604, K01604
 	MOVB	000011(R4), R0
 	BIC	#177600, R0
-	MOVB	R0, 001607
+	MOVB	R0, K01607
 	MOVB	000001(R4), R0
 	CALL	K47660			; DRWOB
 	CALL	K36112			; GRDAR
@@ -2955,13 +2938,13 @@ K31454:	ADD	#000007, R3
 	MOVB	-(R3), R5
 	XOR	R0, R5
 	MOVB	R5, (R3)
-	MOVB	-(R3), 001607
+	MOVB	-(R3), K01607
 	MOVB	-(R3), K01606
 	MOVB	#000037, -(R3)
 	INC	R3
 	ADD	#000037, K01606
 	MOVB	K01606, (R3)+
-	MOVB	001607, (R3)
+	MOVB	K01607, (R3)
 ; NBATI:
 K31626:	MOV	#000004, R1		; 4.
 	MOV	#K33504, R4
@@ -3316,8 +3299,8 @@ K36112:	MOVB	000004(R4), K01611
 	MOV	#K46162, R2		; NINDC address
 K36142:	MOV	#000010, R1		;WARN 8.
 	MOVB	036200, K01604
-	MOVB	000011(R4), 001607
-	BICB	#177600, 001607
+	MOVB	000011(R4), K01607
+	BICB	#177600, K01607
 	MOVB	000001(R4), R0
 	JMP	K47660			; DRWOB
 ;
@@ -3341,7 +3324,7 @@ K36220:	MOV	K36212, R3		; get MANPS
 	MOV	#K46162, R2		; get NINDC
 	MOV	#000010, R1		; 8.
 K36240:	MOVB	#006, K01604		; 6.
-	MOVB	K36211, 001607		; get MAND
+	MOVB	K36211, K01607		; get MAND
 	MOVB	K36210, R0		; get MANA
 	JMP	K47660			; => DRWOB
 ;
@@ -3602,7 +3585,7 @@ K37656:	JMP	K25276			; => ENDVC
 K37662:	.WORD	0			; SPEED
 ;
 ; TPORT: Teleport to room (30.,24.)
-K37664:	CALL	K01612
+K37664:	NOP2	;CALL	K01612			; fill screen attrs??
 	MOVB	#000036, K36215		; set RMAC = 30. room position
 	MOVB	#000030, K36214		; set RMDN = 24. room level
 	MOVB	#005, K36211		; set MAND = 5
@@ -3684,7 +3667,7 @@ K40356:	MOV	#K40276, 047720
 	ADD	R1, R3
 	MOV	#000004, R1
 	MOVB	#000013, K01604
-	MOVB	040300, 001607
+	MOVB	040300, K01607
 	MOVB	K36210, R0		; get MANA
 	SUB	#000002, R0
 	CALL	K47660			; DRWOB
@@ -3698,7 +3681,7 @@ K40436:	MOV	#K17202, 047720		; BIKPS addr ->
 	ADD	R1, R3
 	MOVB	#005, R1
 	MOVB	#000013, K01604
-	MOVB	#000012, 001607
+	MOVB	#000012, K01607
 	MOVB	K36210, R0		; get MANA
 	SUB	#000002, R0
 	CALL	K47660			; DRWOB
@@ -3901,7 +3884,7 @@ K47734:	MOVB	050062, K01604
 	PUSH	R3
 K47754:	CMPB	K01606, #000040
 	BHIS	K50010
-	CMPB	001607, #000022
+	CMPB	K01607, #000022
 	BHIS	K50010
 	MOVB	(R4), R0
 K47776:	NOP		;!!MUT-CMD!!  NOP or MOVB R0,(R1)  see L10224
@@ -3917,7 +3900,7 @@ K50010:	INCB	K01606
 	BNE	K47754
 	POP	R3
 	ADD	#000040, R3
-	INCB	001607
+	INCB	K01607
 	POP	R4
 	ADD	#000040, R4
 	SOB	R5, K47734		; repeat
@@ -4762,7 +4745,7 @@ K55336:	MOVB	055464, K01604		; <
 	MOVB	047666, K01606
 K55352:	CMPB	K01606, #000040		; 32.
 	BHIS	K55406
-	CMPB	001607, #000022		; 18.
+	CMPB	K01607, #000022		; 18.
 	BHIS	K55406
 	MOVB	(R4), R0
 K55374:	NOP		;!!MUT-CMD!!  NOP or MOVB R0,(R1)  see L10224
@@ -4778,7 +4761,7 @@ K55406:	INCB	K01606
 	BNE	K55352
 	ADD	#000032, R3
 	ADD	#000014, R2		; 12.
-	INCB	001607
+	INCB	K01607
 	ADD	#000032, R4
 	ADD	#000014, R1		; 12.
 	SOB	R5, K55336		; repeat => LROP6
@@ -5011,12 +4994,28 @@ L10332:	PUSH	R2			; <
 	BNE	L10374			; |
 	SUB	#000400, R2		; |
 	ADD	#004000, R2		; |
-L10374:	SOB	R4, L10332		; repeat
-; Clear atributes
+L10374:	SOB	R4, L10332		; repeat; Clear atributes
 ;NOTE удалил, не нужно на БК
 L10554:	POP	R4
 	RETURN
-
+;
+; Clear 1024.*8.*2. = 16K bytes on the screen
+K01224:	MOV	#000000, R0		; Filler value  !!MUT-ARG!!
+	MOV	#002000, R1		; 1024.
+	MOV	#040000, R5		; Screen start address
+	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
+K01254:	MOV	R0, (R5)+		; <  #0
+	MOV	R0, (R5)+		; |  #1
+	MOV	R0, (R5)+		; |  #2
+	MOV	R0, (R5)+		; |  #3
+	MOV	R0, (R5)+		; |  #4
+	MOV	R0, (R5)+		; |  #5
+	MOV	R0, (R5)+		; |  #6
+	MOV	R0, (R5)+		; |  #7
+	SOB	R1, K01254		; repeat
+	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
+	RETURN
+;
 ;TODO: Поместить в буферную память, используется один раз на старте
 PREPAR:
 ; Создать таблицу PXCONV, для конвертации пикселей
@@ -5035,7 +5034,7 @@ PREPAR:
 	BLT	1$
 	RETURN
 
-	.BLKW	45	;NOTE: Свободное место
+	.BLKW	17	;NOTE: Свободное место
 
 L10560:	.ASCIZ	/                     /	; SPCHR 21. space char
 ;
@@ -5562,7 +5561,7 @@ L14506:	MOV	#000000, R2		;!!MUT-ARG!!
 L14534:	MOVB	#000, R5		;!!MUT-ARG!!
 	ASL	R5			;
 	MOV	PXCONH(R5), R5		;
-	MOV	#000010, R1		; 8.
+	MOV	#000012, R1		; 8. NOTE: Увеличено для БК
 	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
 L14560:	MOV	(R3), R0		; <
 	XOR	R5, R0
