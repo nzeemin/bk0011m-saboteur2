@@ -5162,9 +5162,9 @@ L11360:	PUSH	R1			; <
 L11400:	NOP2
 	NOP1
 	NOP2
-L11412:	CMPB	R0, #112		; 'J' - KEMPSTON
+L11412:	CMPB	R0, #112		; 'J' - JOYSTICK
 	BNE	L11424
-	JMP	L13206			; Kempston selected
+	JMP	L13206			; Joystick selected
 L11424:	CMPB	R0, #122		; 'R' - REDEFINE KEYS
 	BNE	L11436
 	JMP	L12316			; Redefine Keys selected
@@ -5404,9 +5404,9 @@ L13146:	CALL	L13424			; NOCOL Clear Menu selection
 ;NOTE: Protek убран - не нужно на БК
 L13176:	CALL	L13464			; SETCOL Show Menu selection
 	JMP	L11464			; Continue to Menu
-; Kempston selected
+; Joystick selected
 L13206:	CALL	L13424			; NOCOL Clear Menu selection
-	MOV	#054402, R3
+	MOV	#054302, R3
 	MOV	#000001, R0		; input method = 1
 	BR	L13176			; Show Menu selection and Continue to Menu
 ;
@@ -5435,7 +5435,7 @@ L13242:	MOV	R2, #000000		;!!MUT-ARG!!
 ;
 ; Procedure: Set attributes for 8x8 block; R0 = attribute, R2 = screen address
 L13312:	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
-	NOP3
+	NOP1
 	MOVB	R0, (R2)		; #0
 	ADD	#000100, R2
 	MOVB	R0, (R2)		; #1
@@ -5456,23 +5456,22 @@ L13312:	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
 	RETURN
 	NOP3
 ; NOCOL procedure: Clear Menu selection
-L13424:	MOV	#000016, R0		; attribute
+L13424:	CLR	R0			; filler = 0
 ; BRGO1:
-L13430:	MOV	#054202, R2		; !!MUT-ARG!!
-	CALL	L13242
+L13430:	MOV	#054202, R2		; !!MUT-ARG!! screen coords
+	CALL	L13242			; calc screen addr
+	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
 	MOV	#000015, R1		; 13.
-L13444:	PUSH	R2			; <
-	CALL	L13312			; |  set attributes for 8x8 block
-	POP	R2			; |
-	INC	R2			; |  next column
-	INC	R2			; |
+L13444:	MOV	R0, 001200(R2)		; <
+	TST	(R2)+
 	SOB	R1, L13444		; repeat
+	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
 	RETURN
 ; SETCOL procedure: Show Menu selection; R0 = input method
 L13464:	MOVB	R0, K41304		; Save input method selection
-	MOV	R3, <L13430+2>
+	MOV	R3, <L13430+2>		; set screen coords
 ; INICL:
-L13474:	MOV	#000061, R0		; attribute
+L13474:	MOV	#177777, R0		; filler
 	BR	L13430
 ;
 ; Text for Menu
