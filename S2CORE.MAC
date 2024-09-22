@@ -3783,19 +3783,25 @@ K41174:	.BYTE	0			; FFCOL+1
 K41175:	.BYTE	0			; TMPNC
 ;
 ; KEY procedure: Check if we have a key pressed, and do keymapping
-K41176:
-	PUSH	R3
+K41176:	PUSH	R3
+	PUSH	R1
 	MOV	#K41304, R3
 	MOVB	(R3)+, R0		; get input method; R3 = K41305
 	BEQ	K41232			; == 0 => process keyboard
-;TODO: read BK joystick and process it
-	MOVB	@#177714, R0
-	NOP2
-	NOP2
-	NOP1
-	BR	K41216
+; Read joystick and map it
+; Используем 2-ю колонку таблицы K41305 как бит-признак, 3-я колонка даёт бит результата
+	CLR	R0
+	MOVB	@#177714, R1	;БК	; Читаем состояние джойстика
+10$:	INC	R3
+	TSTB	(R3)			; конец таблицы?
+	BEQ	K41300
+	BITB	(R3)+, R1		; matches the bits?
+	BEQ	20$
+	BISB	(R3), R0
+20$:	INC	R3
+	BR	10$
 ; If we have a key pressed, go through key mapping table
-K41232:	PUSH	R1
+K41232:
 	TSTB	@#177660	;БК	; do we have an unprocessed key?
 	BPL	K41276		;БК	; no => jump
 	MOVB	@#177662, R0	;БК	; get the key
@@ -3809,7 +3815,6 @@ K41270:	ADD	#000002, R3		; |  to next key probe
 	SOB	R1, K41256		; repeat
 K41276:	CLR	R0			; not found - result is empty
 K41300:	POP	R1
-K41216:	MOVB	R0, 041340
 	POP	R3
 	RETURN
 ;
@@ -3821,21 +3826,18 @@ K41216:	MOVB	R0, 041340
 ;  7   6   5   4   3   2   1   0
 ;              Fr  Up  Dn  Lt  Rt
 ;
-; Input method
+; Input method: 0 = keyboard, 1 = joystick
 K41304:	.BYTE	0
 ; Key mappings
 K41305:	.BYTE	070, 001, 010		; '8' - up
-	.BYTE	062, 002, 004		; '2' - down
+	.BYTE	062, 004, 004		; '2' - down
 	.BYTE	064, 010, 002		; '4' - left
-	.BYTE	066, 004, 001		; '6' - right
-	.BYTE	065, 001, 020		; '5' - fire
+	.BYTE	066, 002, 001		; '6' - right
+	.BYTE	065, 140, 020		; '5' - fire
 	.BYTE	061, 000, 012		; '1' - up + left
 	.BYTE	063, 000, 011		; '3' - up + right
 	.BYTE	067, 000, 024		; '7' - down + fire
 	.BYTE	071, 000, 024		; '9' - down + fire
-;
-K41340:	.BYTE	0			; Saved read controls
-	.EVEN
 ;
 ;K41342:
 .INCLUDE /S242E2.MAC/
