@@ -157,26 +157,27 @@ K02044:	SOB	R1, K01716		; repeat
 	RETURN
 ;
 ; Procedure: Screen coords R2 to screen address
+; Screen coords word: [0  1  0  Y7 Y6 Y2 Y1 Y0 | Y5 Y4 Y3 X4 X3 X2 X1 X0]
 K02056:	MOV	R2, R4
-	BIC	#177740, R4		; 0..31.
-	BIC	#160037, R2
+	BIC	#177740, R4		; X = 0..31.
+	BIC	#160037, R2		; 1110000000011111
 K02070:	MOV	R2, #000000		;!!MUT-ARG!!
 	SWAB	R2
-	BIC	#177770, R2		; 0..7
+	BIC	#177770, R2		; Y2 Y1 Y0
 	ASL	R2
-	ASL	R2
-K02106:	BISB	R2, <K02070+2>
-	BICB	#177747, <K02070+3>
+	ASL	R2			; R2 = [0  0  0  Y2 Y1 Y0  0  0]
+K02106:	BISB	R2, <K02070+2>		; (K02070+2) = [Y5 Y4 Y3 Y2 Y1 Y0  0  0]
+	BICB	#177747, <K02070+3>	; 1111111111100111 keep Y7 Y6
 	ASRB	<K02070+3>
 	ASRB	<K02070+3>
-	ASRB	<K02070+3>
-	MOV	<K02070+2>, R2
+	ASRB	<K02070+3>		; (K02070+3) = [0  0  0  0  0  0  0  Y7 Y6]
+	MOV	<K02070+2>, R2		; R2 = [0  0  0  0  0  0  0  Y7 Y6 | Y5 Y4 Y3 Y2 Y1 Y0  0  0]
 	ASL	R2
-	ASL	R2
+	ASL	R2			; R2 = [0  0  0  0  0  Y7 Y6 Y5 Y4 | Y3 Y2 Y1 Y0  0  0  0  0] = Y * 16.
 	MOV	R2, <K02070+2>
 	ASL	R2
-	ASL	R2
-	ADD	<K02070+2>, R2
+	ASL	R2			; R2 = [0  0  0  Y7 Y6 Y5 Y4 Y3 Y2 | Y1 Y0  0  0  0  0  0  0]
+	ADD	<K02070+2>, R2		; (K02070+2) = Y * 16. * 5. = Y * 80.
 	ASL	R4
 	ADD	R4, R2
 	ADD	#040000, R2		; R2 = screen address
@@ -702,40 +703,40 @@ K04674:	PUSH	R3
 	MOV	#000005, R1		; 5.
 K04724:	BICB	#177600, (R3)+		; <
 	SOB	R1, K04724		; repeat
-	MOV	#073477, R3		; screen address
-	MOV	#000010, R1
-	MOV	#000017, R0
-	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
-	NOP3
-K04762:	MOVB	R0, (R3)+		; <
-	INC	R3
-	MOVB	R0, (R3)+
-	INC	R3
-	MOVB	R0, (R3)+
-	INC	R3
-	MOVB	R0, (R3)+
-	INC	R3
-	ADD	#000070, R3
-	SOB	R1, K04762		; repeat
-	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
-	NOP3
+	CALL	XRNEAR			; Invert NEAR sign
 	CALL	L10300			; MONYP - Print MONEY
 	CLR	R0
 K05032:	MOV	#000032, R3
 	BR	K05050
+; Invert 4-char NEAR sign
+XRNEAR:
+	MOV	#073467, R3		; screen address
+	MOV	#000012, R1		; char height
+	MOV	#125252, R0		; XOR mask
+	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
+K04762:	XOR	R0, (R3)+		; <
+	XOR	R0, (R3)+
+	XOR	R0, (R3)+
+	XOR	R0, (R3)+
+	ADD	#000070, R3
+	SOB	R1, K04762		; repeat
+	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
+	RETURN
+	NOP3
+	NOP3
+	NOP2
 ; HLDOD procedure
 K05040:	MOVB	K33464, R0		; get HELD value
 	PUSH	R3
 	CLR	R3
+; TEACH: draw HELD or NEAR item; R0 = item number; R3 = 000 for HELD, 026 for NEAR
 K05050:	ASL	R3
-	MOV	R3, <K05100+2>
 	BIC	#177600, R0		; 0..177
 	PUSH	R1
 	PUSH	R2
 	ASL	R0
 	MOV	K05254(R0), R2		; get item address
-	MOV	#067602, R3
-K05100:	ADD	#000000, R3		;!!MUT-ARG!!
+	ADD	#067602, R3		; HELD item screen address + offset
 	PUSH	R3
 	MOV	#000030, R1
 	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
@@ -756,28 +757,14 @@ K05126:	MOVB	(R2)+, R5		; <
 	POP	R3
 	INC	R3
 	MOV	#000003, R5
-K05164:	;MOV	#000010, R1		; <
-K05170:	;MOV	R2, R4			;   <
-	;MOVB	(R2)+, (R3)+
-	;INC	R3
-	;MOVB	(R2)+, (R3)+
-	;INC	R3
-	;MOVB	(R2)+, (R3)+
-	;INC	R3
-	;MOVB	(R2)+, (R3)+
-	;INC	R3
-	;ADD	#000070, R3
-	;MOV	R4, R2
-	;SOB	R1, K05170		;   repeat
-	;ADD	#000004, R2
-	;SOB	R5, K05164		; repeat
+K05164:
 	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
 	POP	R2
 	POP	R1
 	POP	R3
 	RETURN
 
-	.BLKW	14	;NOTE: Свободное место
+	.BLKW	17	;NOTE: Свободное место
 ;
 ; Table of addrs: Nothing, Shuriken, Knife, Empty Box, Question, Pipe, Question, Wrench
 K05254:	.WORD	K05274, K05450, K05624, K06000, K06154, K06504, K06154, K06330
@@ -4096,12 +4083,13 @@ K51216:	MOVB	K23750, R0		; get TEMPN
 	BPL	K51300
 	BIC	#177600, R0		; 0..177
 	PUSH	R0
-	MOV	#055333, R2		; screen coords
-	MOVB	#004, R1		; 4. rows
-	MOV	#000217, R0
-K51246:	CALL	L13224			; <  calc screen attr address and set attrs for 8x8 block
-	INC	R2
-	SOB	R1, K51246		; repeat
+	NOP2	;MOV	#055333, R2		; screen coords
+	NOP2	;MOVB	#004, R1		; 4. rows
+	NOP2	;MOV	#000217, R0
+K51246:	NOP2	;CALL	L13224			; <  calc screen attr address and set attrs for 8x8 block
+		;INC	R2
+		;SOB	R1, K51246		; repeat
+	CALL	XRNEAR
 	MOV	#K50764, R3		; "STASH SEARCHED"
 	MOV	#000016, R1		; 14.
 	MOV	#050146, R2		; screen coords
@@ -4897,37 +4885,43 @@ L07710:	PUSH	R4
 	MOV	#000013, R1
 L07742:	MOV	#000030, R4		; <
 	PUSH	R3
-L07750:	MOVB	(R2)+, R5		;   <
+L07750:	MOVB	(R2)+, R5		;   < #0
 	ASL	R5
 	MOV	PXCONH(R5), (R3)
 	ADD	#000100, R3
-	MOVB	(R2)+, R5
+	MOVB	(R2)+, R5		;     #1
 	ASL	R5
 	MOV	PXCONH(R5), (R3)
 	ADD	#000100, R3
-	MOVB	(R2)+, R5
+	MOVB	(R2)+, R5		;     #2
 	ASL	R5
 	MOV	PXCONH(R5), (R3)
 	ADD	#000100, R3
-	MOVB	(R2)+, R5
+	MOVB	(R2)+, R5		;     #3
+	ASL	R5
+	MOV	PXCONH(R5), R5
+	MOV	R5, (R3)
+	ADD	#000100, R3
+	MOV	R5, (R3)		;     дублируем строку в середине
+	ADD	#000100, R3
+	MOVB	(R2)+, R5		;     #4
 	ASL	R5
 	MOV	PXCONH(R5), (R3)
 	ADD	#000100, R3
-	MOVB	(R2)+, R5
+	MOVB	(R2)+, R5		;     #5
 	ASL	R5
 	MOV	PXCONH(R5), (R3)
 	ADD	#000100, R3
-	MOVB	(R2)+, R5
+	MOVB	(R2)+, R5		;     #6
 	ASL	R5
 	MOV	PXCONH(R5), (R3)
 	ADD	#000100, R3
-	MOVB	(R2)+, R5
+	MOVB	(R2)+, R5		;     #7
 	ASL	R5
-	MOV	PXCONH(R5), (R3)
+	MOV	PXCONH(R5), R5
+	MOV	R5, (R3)
 	ADD	#000100, R3
-	MOVB	(R2)+, R5
-	ASL	R5
-	MOV	PXCONH(R5), (R3)
+	MOV	R5, (R3)		;     дублируем строку в конце
 	ADD	#000100, R3
 	SOB	R4, L07750		; | repeat
 	POP	R3
@@ -4937,18 +4931,17 @@ L07750:	MOVB	(R2)+, R5		;   <
 	MOV	#130424, R2
 	MOV	#000030, R1
 L10054:	MOV	#000040, R4		; <
-L10060:	NOP1	;PUSH	R3			; | <
+L10060:		;PUSH	R3			; | <
 L10062:	;NOTE: Удалил
-	NOP1	;POP	R3
+		;POP	R3
 L10140:	;NOTE: Удалил
-	NOP1	;SOB	R4, L10060		;   repeat
-	NOP2	;ADD	#001100, R3
+		;SOB	R4, L10060		;   repeat
+		;ADD	#001100, R3
 	NOP1	;SOB	R1, L10054		; repeat
 	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
 	POP	R4
 	JMP	L10320			; CLSLF Clear Menu left part, and return
 	NOP1
-	NOP3
 ;
 ; GTBAK procedure
 L10200:	MOV	#050110, R3		; MANBF
@@ -5746,7 +5739,7 @@ L15775:
 ;
 .INCLUDE /S29DE4.MAC/
 ;
-.IIF	NE <.-122624>, ERRORA
+.IIF	NE <.-122624>, ERRORB
 ; Reflection table, but starting from 128., 256. bytes; see K06660
 L22624:	;.BLKB	256.
 L23024 = L22624 + 200
