@@ -191,8 +191,8 @@ K02202:	MOV	#K41173, R3		; FFCOL
 	MOVB	(R3), R5		; get FFCOL
 	MOV	#000004, R0
 	XOR	R0, R5			; XOR 4
-	MOVB	R5, (R3)+
-	CLRB	(R3)
+	MOVB	R5, (R3)+		; set FFCOL; R3 = FFCOL+1
+	CLRB	(R3)			; clear (FFCOL+1)
 	MOV	#L27624, K04652		; BUFFN - Ninja tile screen address
 	MOV	#L30724, K04656		; BUFG1 - Enemy 0 tile screen address
 	MOV	#L32024, K04660		; BUFG2 - Enemy 1 tile screen address
@@ -200,27 +200,29 @@ K02202:	MOV	#K41173, R3		; FFCOL
 	MOV	#L25424, R3		; BUFFB - Back tile screen address
 	MOV	#L24324, R2		; BUFFD
 	MOV	#040000, R5		; screen start address
-	MOV	#L24324, R4		; BUFFD
-K02272:	MOV	#000022, #000000	;!!MUT-2ndARG!!
-; LOOP1:
-K02300:	MOV	#000040, R1		; 32.
-; LOOP2:
-K02304:	PUSH	R1
-	PUSH	R3
-	PUSH	R2
+	MOV	R2, R4			; BUFFD
+	NOP1
+K02272:	MOV	#000022, #000000	;!!MUT-2ndARG!! 18. rows
+; LOOP1: loop by rows
+K02300:	MOV	#000040, #000000	;!!MUT-2ndARG!! 32. columns
+; LOOP2: loop by columns along the row
+K02304:
+	PUSH	R3			; save addr in BUFFB
+	PUSH	R2			; save addr in BUFFD
 	MOVB	(R4), R0
 	BNE	K02322
-	JMP	K04440			; => NDRAW
-K02322:	MOVB	(R3), R0
-	BIC	#177400, R0
+	JMP	K04440			; => NDRAW - not drawing this tile now
+	NOP1
+K02322:	CLR	R0
+	BISB	(R3), R0		; get tile from BUFFB: Back tile screen
 	MOVB	R0, <K04673>		; set BAKCR
 	MOV	R0, R3
 	ASL	R3
 	ASL	R3
 	ASL	R3			; *8.
 	ADD	R0, R3			; *9.
-	ADD	#K77531, R3		; BCHRS
-	MOV	#K04662, R2		; PIX
+	ADD	#K77531, R3		; + BCHRS
+	MOV	#K04662, R2		; PIX addr
 	MOVB	(R3)+, (R2)+
 	MOVB	(R3)+, (R2)+
 	MOVB	(R3)+, (R2)+
@@ -228,7 +230,7 @@ K02322:	MOVB	(R3), R0
 	MOVB	(R3)+, (R2)+
 	MOVB	(R3)+, (R2)+
 	MOVB	(R3)+, (R2)+
-K02374:	MOVB	(R3)+, (R2)+
+	MOVB	(R3)+, (R2)+		; Copied tile pixels to PIX buffer
 	NOP1	;MOVB	(R3)+, (R2)+		; attr
 	CLRB	K41174			; clear FFCOL+1
 	MOVB	@K04656, R0		; get tile from Enemy 0 tile screen
@@ -254,8 +256,8 @@ K02450:	BICB	#177407, K04672		; COL
 	ADD	#K73546, R3		; GCHRS - tiles base address
 	MOV	#K04662, R2		; PIX buffer address
 	CALL	K36042			; G1DIS
-	MOVB	(R3), R1
-	MOVB	007126(R1), R0
+	MOVB	(R3), R1		; #0
+	MOVB	K07126(R1), R0		; get mask
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
@@ -263,8 +265,8 @@ K02450:	BICB	#177407, K04672		; COL
 	MOVB	(R3)+, R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
-	MOVB	(R3), R1
-	MOVB	007126(R1), R0
+	MOVB	(R3), R1		; #1
+	MOVB	K07126(R1), R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
@@ -272,8 +274,8 @@ K02450:	BICB	#177407, K04672		; COL
 	MOVB	(R3)+, R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
-	MOVB	(R3), R1
-	MOVB	007126(R1), R0
+	MOVB	(R3), R1		; #2
+	MOVB	K07126(R1), R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
@@ -281,8 +283,8 @@ K02450:	BICB	#177407, K04672		; COL
 	MOVB	(R3)+, R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
-	MOVB	(R3), R1
-	MOVB	007126(R1), R0
+	MOVB	(R3), R1		; #3
+	MOVB	K07126(R1), R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
@@ -290,8 +292,8 @@ K02450:	BICB	#177407, K04672		; COL
 	MOVB	(R3)+, R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
-	MOVB	(R3), R1
-	MOVB	007126(R1), R0
+	MOVB	(R3), R1		; #4
+	MOVB	K07126(R1), R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
@@ -299,8 +301,8 @@ K02450:	BICB	#177407, K04672		; COL
 	MOVB	(R3)+, R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
-	MOVB	(R3), R1
-	MOVB	007126(R1), R0
+	MOVB	(R3), R1		; #5
+	MOVB	K07126(R1), R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
@@ -308,8 +310,8 @@ K02450:	BICB	#177407, K04672		; COL
 	MOVB	(R3)+, R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
-	MOVB	(R3), R1
-	MOVB	007126(R1), R0
+	MOVB	(R3), R1		; #6
+	MOVB	K07126(R1), R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
@@ -317,8 +319,8 @@ K02450:	BICB	#177407, K04672		; COL
 	MOVB	(R3)+, R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
-	MOVB	(R3), R1
-	MOVB	007126(R1), R0
+	MOVB	(R3), R1		; #7
+	MOVB	K07126(R1), R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
@@ -327,20 +329,21 @@ K02450:	BICB	#177407, K04672		; COL
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	CALL	K36042			; G1DIS
+; GRD2:
 K03014:	MOVB	@K04660, R0		; get tile from Enemy 1 tile screen
 	CLR	R3
 	BISB	R0, R3
 	INCB	R0
-	BEQ	K03364
-	BICB	#177407, K04672		; COL
+	BEQ	K03364			; => NINJA
+	BICB	#177407, K04672		; COL := COL AND 248.
 	ASL	R3
 	ASL	R3
 	ASL	R3			; *8.
 	ADD	#K73546, R3		; GCHRS - tiles base address
 	MOV	#K04662, R2		; PIX
 	CALL	K36056			; G2DIS
-	MOVB	(R3), R1
-	MOVB	007126(R1), R0
+	MOVB	(R3), R1		; #0
+	MOVB	K07126(R1), R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
@@ -348,8 +351,8 @@ K03014:	MOVB	@K04660, R0		; get tile from Enemy 1 tile screen
 	MOVB	(R3)+, R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
-	MOVB	(R3), R1
-	MOVB	007126(R1), R0
+	MOVB	(R3), R1		; #1
+	MOVB	K07126(R1), R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
@@ -357,8 +360,8 @@ K03014:	MOVB	@K04660, R0		; get tile from Enemy 1 tile screen
 	MOVB	(R3)+, R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
-	MOVB	(R3), R1
-	MOVB	007126(R1), R0
+	MOVB	(R3), R1		; #2
+	MOVB	K07126(R1), R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
@@ -366,8 +369,8 @@ K03014:	MOVB	@K04660, R0		; get tile from Enemy 1 tile screen
 	MOVB	(R3)+, R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
-	MOVB	(R3), R1
-	MOVB	007126(R1), R0
+	MOVB	(R3), R1		; #3
+	MOVB	K07126(R1), R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
@@ -375,8 +378,8 @@ K03014:	MOVB	@K04660, R0		; get tile from Enemy 1 tile screen
 	MOVB	(R3)+, R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
-	MOVB	(R3), R1
-	MOVB	007126(R1), R0
+	MOVB	(R3), R1		; #4
+	MOVB	K07126(R1), R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
@@ -384,8 +387,8 @@ K03014:	MOVB	@K04660, R0		; get tile from Enemy 1 tile screen
 	MOVB	(R3)+, R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
-	MOVB	(R3), R1
-	MOVB	007126(R1), R0
+	MOVB	(R3), R1		; #5
+	MOVB	K07126(R1), R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
@@ -393,8 +396,8 @@ K03014:	MOVB	@K04660, R0		; get tile from Enemy 1 tile screen
 	MOVB	(R3)+, R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
-	MOVB	(R3), R1
-	MOVB	007126(R1), R0
+	MOVB	(R3), R1		; #6
+	MOVB	K07126(R1), R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
@@ -402,8 +405,8 @@ K03014:	MOVB	@K04660, R0		; get tile from Enemy 1 tile screen
 	MOVB	(R3)+, R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
-	MOVB	(R3), R1
-	MOVB	007126(R1), R0
+	MOVB	(R3), R1		; #7
+	MOVB	K07126(R1), R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
@@ -415,11 +418,11 @@ K03014:	MOVB	@K04660, R0		; get tile from Enemy 1 tile screen
 ; NINJA:
 K03364:	MOVB	K03542, K41175		; save (NJCOL+1) to TMPNC
 	CLR	R3
-	MOVB	@K04652, R0		; get tile from Ninja tile screen
+	MOVB	@K04652, R0		; get tile from BUFFN: Ninja tile screen
 	BISB	R0, R3
 	INCB	R0
 	BNE	K03412
-	JMP	K04104
+	JMP	K04104			; 0 => OBJDA
 K03412:	CMPB	R0, #000341		; 225.
 	BHIS	K03462			; => WILSN
 	CMPB	R0, #000323		; 221.
@@ -465,7 +468,7 @@ K03560:	MOVB	K41175, K03542		; restore TMPNC -> NJCOL+1
 	ADD	#116744, R3		; + NCHRS
 	MOV	#K04662, R2		; PIX
 	MOVB	(R3), R1
-	MOVB	007126(R1), R0
+	MOVB	K07126(R1), R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
@@ -474,7 +477,7 @@ K03560:	MOVB	K41175, K03542		; restore TMPNC -> NJCOL+1
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
-	MOVB	007126(R1), R0
+	MOVB	K07126(R1), R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
@@ -483,7 +486,7 @@ K03560:	MOVB	K41175, K03542		; restore TMPNC -> NJCOL+1
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
-	MOVB	007126(R1), R0
+	MOVB	K07126(R1), R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
@@ -492,7 +495,7 @@ K03560:	MOVB	K41175, K03542		; restore TMPNC -> NJCOL+1
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
-	MOVB	007126(R1), R0
+	MOVB	K07126(R1), R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
@@ -501,7 +504,7 @@ K03560:	MOVB	K41175, K03542		; restore TMPNC -> NJCOL+1
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
-	MOVB	007126(R1), R0
+	MOVB	K07126(R1), R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
@@ -510,7 +513,7 @@ K03560:	MOVB	K41175, K03542		; restore TMPNC -> NJCOL+1
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
-	MOVB	007126(R1), R0
+	MOVB	K07126(R1), R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
@@ -519,7 +522,7 @@ K03560:	MOVB	K41175, K03542		; restore TMPNC -> NJCOL+1
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
-	MOVB	007126(R1), R0
+	MOVB	K07126(R1), R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
@@ -528,7 +531,7 @@ K03560:	MOVB	K41175, K03542		; restore TMPNC -> NJCOL+1
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1
-	MOVB	007126(R1), R0
+	MOVB	K07126(R1), R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	COMB	(R2)
 	BICB	(R2), R0
@@ -536,7 +539,7 @@ K03560:	MOVB	K41175, K03542		; restore TMPNC -> NJCOL+1
 	MOVB	(R3)+, R0
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
-;
+; OBJDA:
 K04104:	MOV	#K04672, R3		; get COL
 	MOV	#000020, R0		; 16.
 ; COLRD:
@@ -550,49 +553,34 @@ K04114:	NOP		;!!MUT-CMD!! "NOP" command or "MOVB R0,(R3)" command
 	ASL	R3
 	ASL	R3
 	ASL	R3			; *8.
-	CMPB	R0, #000345		; compare to 229.
-	BHIS	K04526			; => BUFWR
+	CMPB	R0, #345		; compare to 229.
+	BHIS	K04526			; > 229. => BUFWR: use computerized font
 	ASL	R3
 	ADD	R1, R3			; *17.
 	ADD	#K41342, R3		; + OCHRS
-	MOV	#K04662, R2		; PIX
-	MOVB	(R3)+, R0
-	COMB	R0
-	BICB	R0, (R2)
-	BISB	(R3)+, (R2)+		; #0
-	MOVB	(R3)+, R0
-	COMB	R0
-	BICB	R0, (R2)
-	BISB	(R3)+, (R2)+		; #1
-	MOVB	(R3)+, R0
-	COMB	R0
-	BICB	R0, (R2)
-	BISB	(R3)+, (R2)+		; #2
-	MOVB	(R3)+, R0
-	COMB	R0
-	BICB	R0, (R2)
-	BISB	(R3)+, (R2)+		; #3
-	MOVB	(R3)+, R0
-	COMB	R0
-	BICB	R0, (R2)
-	BISB	(R3)+, (R2)+		; #4
-	MOVB	(R3)+, R0
-	COMB	R0
-	BICB	R0, (R2)
-	BISB	(R3)+, (R2)+		; #5
-	MOVB	(R3)+, R0
-	COMB	R0
-	BICB	R0, (R2)
-	BISB	(R3)+, (R2)+		; #6
-	MOVB	(R3)+, R0
-	COMB	R0
-	BICB	R0, (R2)
-	BISB	(R3)+, (R2)+		; #7
+	MOV	#K04662, R2		; PIX addr
+;NOTE: Masks are inverted, so we don't need extra COMB on them
+	BICB	(R3)+, (R2)		; #0
+	BISB	(R3)+, (R2)+
+	BICB	(R3)+, (R2)		; #1
+	BISB	(R3)+, (R2)+
+	BICB	(R3)+, (R2)		; #2
+	BISB	(R3)+, (R2)+
+	BICB	(R3)+, (R2)		; #3
+	BISB	(R3)+, (R2)+
+	BICB	(R3)+, (R2)		; #4
+	BISB	(R3)+, (R2)+
+	BICB	(R3)+, (R2)		; #5
+	BISB	(R3)+, (R2)+
+	BICB	(R3)+, (R2)		; #6
+	BISB	(R3)+, (R2)+
+	BICB	(R3)+, (R2)		; #7
+	BISB	(R3)+, (R2)+
 	CMPB	(R3), #377		; == 255. ?
 	BEQ	K04274			; => DRAW
 	MOVB	(R3), (R2)
-; DRAW: Copy pixels from K04662 to screen; R5 = address on screen
-K04274:	MOV	#K04662, R3		; PIX
+; DRAW: Copy pixels from PIX to screen; R5 = address on screen
+K04274:	MOV	#K04662, R3		; PIX addr
 	;PUSH	R5
 	;MOV	#100, R1		; offset to next line
 	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
@@ -627,30 +615,31 @@ K04274:	MOV	#K04662, R3		; PIX
 	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
 	;MOVB	(R3), R0		; get attr
 	;POP	R5
+; NDRAW: proceed to the next tile
 K04440:	TST	(R5)+			; next column
-	INC	K04652			; next address in Ninja tile screen
-	INC	K04656			; next address in Enemy 0 tile screen
-	INC	K04660			; next address in Enemy 1 tile screen
-	INC	K04654			; next address in Front tile screen
-	POP	R2
-	POP	R3
-	POP	R1
-	INC	R2
-	INC	R3
+	INC	K04652			; next addr in BUFFN: Ninja tile screen
+	INC	K04656			; next addr in Enemy 0 tile screen
+	INC	K04660			; next addr in Enemy 1 tile screen
+	INC	K04654			; next addr in Front tile screen
+	POP	R2			; restore addr in BUFFD
+	POP	R3			; restore addr in BUFFB
+	INC	R2			; next addr in BUFFD
+	INC	R3			; next addr in BUFFB
 	INC	R4
-	DEC	R1
-	BEQ	K04506
-	JMP	K02304			; => LOOP2
-K04506:	ADD	#001100, R5
-	DEC	<K02272+4>
-	BEQ	K04632			; Z => RETURN
+	DEC	<K02300+4>		; decrement column counter
+	BEQ	K04506			; end of row?
+	JMP	K02304			; no => LOOP2
+K04506:	ADD	#001100, R5		; next row
+	DEC	<K02272+4>		; decrement row counter
+	BEQ	K04632			; Z => loop finished, RETURN
 	JMP	K02300			; => LOOP1
+;
 ; BUFWR:
-K04526:	ADD	#112754, R3		; ??? some base address
+K04526:	ADD	#<L16014-1568.>, R3	; + computerized font base address
 	CMPB	R0, #000345		; == 229. ?
 	BNE	K04544			; no => NOEL6
 	MOV	#L16014, R3		; CHARSET - computerized font base address
-K04544:	MOV	#K04662, R2		; PIX
+K04544:	MOV	#K04662, R2		; PIX addr
 	MOVB	(R3)+, (R2)+
 	MOVB	(R3)+, (R2)+
 	MOVB	(R3)+, (R2)+
@@ -658,10 +647,16 @@ K04544:	MOV	#K04662, R2		; PIX
 	MOVB	(R3)+, (R2)+
 	MOVB	(R3)+, (R2)+
 	MOVB	(R3)+, (R2)+
-	MOVB	(R3)+, (R2)+
+	MOVB	(R3)+, (R2)+		; Copied char pixels to PIX buffer
 	;MOVB	#060, (R2)		;NOTE: Атрибут, не нужно на БК
 	BR	K04274			; => DRAW
 	NOP3
+	NOP3
+	NOP3
+	NOP2
+	NOP3
+	NOP3
+	NOP2
 ;
 ; BUFOM procedure: Draw string as tiles; R2 = string, R1 = length
 K04604:	MOV	R1, R5
@@ -1627,7 +1622,7 @@ K16234:	MOV	(SP), R0
 	MOVB	(R0), K01611		; offset high
 	MOV	R0, (SP)
 	MOV	K01610, R3		; get offset
-	ADD	#K43310, R3		; + base address tiles for current room
+	ADD	#043310, R3		; + base address
 K16260:	PUSH	R2			; <
 	PUSH	R3
 K16264:	MOVB	(R4)+, (R3)+		; | <
@@ -1668,7 +1663,7 @@ K16400:	MOV	#062245, R3
 	MOV	#000002, R1
 ; Entry point: Copy tiles; K01604 = width, R1 = height, R4 = address to copy from
 K16432:	MOV	#000040, R2		; 32. = row width
-	ADD	#K43310, R3		; + base address tiles for current room
+	ADD	#043310, R3		; + base address
 	PUSH	R5
 K16444:	MOVB	K01604, R5		; < width  !!MUT-ARG!!
 	PUSH	R3
@@ -1845,7 +1840,7 @@ K20022:	POP	R3
 	MOVB	(R3), K01607
 	PUSH	R3
 	MOV	K01606, R3
-	ADD	#K43310, R3		; + base address tiles for current room
+	ADD	#043310, R3		; + base address
 	MOVB	R0, (R3)
 	JMP	K13422
 ; Room marker $0F 017 - TLDTN
@@ -1855,7 +1850,7 @@ K20056:	MOV	#000312, R0
 	MOVB	(R3), K01607
 	PUSH	R3
 	MOV	K01606, R3
-	ADD	#K43310, R3		; + base address tiles for current room
+	ADD	#043310, R3		; + base address
 	MOVB	R0, (R3)+
 	INCB	R0
 	MOVB	R0, (R3)
@@ -1884,7 +1879,7 @@ K20156:	POP	R0
 	MOVB	(R0), K01611		; get offset hi
 	PUSH	R0
 	MOV	K01610, R3		; offset
-	ADD	#K43310, R3		; + base address tiles for current room
+	ADD	#043310, R3		; + base address
 	MOVB	K01604, R0		; tile
 K20216:	MOVB	R0, (R3)		; < put tile
 	ADD	R2, R3			; | + offset
@@ -1909,7 +1904,7 @@ K20266:	MOV	#000037, R2		; 31.
 	PUSH	R0
 	MOVB	(R0), K01611		; get offset hi
 	MOV	K01610, R3		; offset
-	ADD	#K43310, R3		; + base address tiles for current room
+	ADD	#043310, R3		; + base address
 	MOVB	K01604, R0		; get tile
 K20326:	MOVB	R0, (R3)+		; < put tile
 	INCB	R0			; | next tile
@@ -1979,7 +1974,7 @@ K24010:	MOV	R3, <K24062+2>		; set (DIBLD+1)
 	PUSH	R0
 	MOVB	(R0), K01611
 	MOV	K01610, R3
-	ADD	#K43310, R3		; + base address tiles for current room
+	ADD	#043310, R3		; + base address
 K24050:	PUSH	R2			; <
 	PUSH	R3
 K24054:	MOVB	R5, (R3)+
@@ -2002,7 +1997,7 @@ K24104:	POP	R0			;
 	PUSH	R0
 	MOVB	(R0), K01611		; get offset high
 	MOV	K01610, R3		; offset
-	ADD	#K43310, R3		; + base address tiles for current room
+	ADD	#043310, R3		; + base address
 K24142:	PUSH	R2			; <
 	PUSH	R3
 K24146:	MOVB	R5, (R3)+		; | <  put one tile
@@ -2091,7 +2086,7 @@ K24446:	CMPB	K36214, (R4)		; <  check RMDN room level
 	MOVB	000002(R4), K01610
 	MOVB	000003(R4), K01611
 	MOV	K01610, R3
-	ADD	#K43310, R3		; + base address tiles for current room
+	ADD	#043310, R3		; + base address
 	MOVB	(R3), R0
 	INCB	R0
 	BNE	K24530
@@ -2825,8 +2820,8 @@ K30756:	MOV	#K36212, R3		; MANPS address
 	BEQ	K31116
 	JMP	K25454			; => NXGRD
 K31116:	CLRB	K26672			; clear GDHIT
-	CMP	#000240, K04114		; NOP command
-	BEQ	K31212
+	CMP	#000240, K04114		; NOP command ?
+	BEQ	K31212			; yes =>
 	MOVB	042150, R0
 ; NXINC:
 K31136:	INCB	R0
@@ -3262,17 +3257,17 @@ K33542:	.BYTE	0		; JUMP
 
 K36040:	.BYTE	000,000
 ;
-; G1DIS procedure
+; G1DIS procedure: K36264 <-> (036037)
 K36042:	MOVB	036037, R0
 	MOVB	K36264, 036037		; copy DIR
 	BR	K36104
 ;
-; G2DIS procedure
+; G2DIS procedure: K36264 <-> K36040
 K36056:	MOVB	K36040, R0
 	MOVB	K36264, K36040		; copy DIR
 	BR	K36104
 ;
-; G1DI2 procedure: ??
+; G1DI2 procedure: K36264 <-> (R4+012)
 K36072:	MOVB	000012(R4), R0
 	MOVB	K36264, 000012(R4)	; copy DIR
 K36104:	MOVB	R0, K36264		; set DIR
@@ -3828,10 +3823,6 @@ K41305:	.BYTE	070, 001, 010		; '8' - up
 ;
 ;K41342:
 .INCLUDE /S242E2.MAC/
-;
-; Room tiles for the current room
-;K43310:
-.INCLUDE /S246C8.MAC/
 ;
 ; BUFCL procedure: Fill Ninja tile screen
 K46120:	MOV	#L27624, R3		; BUFFN Ninja tile screen address
