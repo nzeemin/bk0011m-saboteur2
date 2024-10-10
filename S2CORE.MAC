@@ -64,10 +64,10 @@ K01314:	RETURN
 .IIF	NE <.-001552>, ERRORA
 K01552:	.BLKW	5
 K01572:	.BLKW	7
-K01602:	.WORD	0
+K01602:	.WORD	0			; IX
 K01604:	.WORD	0			; temp variable
-K01606:	.BYTE	0
-K01607:	.BYTE	0
+K01606:	.WORD	0
+K01607	=	K01606+1
 K01610:	.WORD	0			; offset value in room marker processing
 K01611	=	K01610+1
 ;
@@ -1111,7 +1111,7 @@ K12514:	MOVB	#060, (R3)+		; <
 	CLRB	K33540			; clear DEAD
 	CLRB	K36214			; RMDN = 0 top level
 	MOV	#<K23030+4>, K23746	; INITSTA address -> NERST
-	MOV	#046310, <K36276+2>	; GLINC address -> CHARN+1
+	MOV	#K46310, <K36276+2>	; GLINC address -> CHARN+1
 	MOV	#K40520, <K25272+2>	; GLIDERP address -> VECTN+1
 	CLRB	K37662			; set SPEED = 0
 	CLRB	K36264			; set DIR = 0
@@ -1221,7 +1221,7 @@ K13426:	.WORD	K20120		; $00 000 - HORLN - Fill horizontally W with tile
 	.WORD	K24104		; $02 002 - BLOCK - Fill rectangle WxH with tile
 	.WORD	K17762		; $03 003 - FILLB - Fill the whole room with tile
 	.WORD	K20022		; $04 004 - ONECR - Fill one tile
-	.WORD	K16024		; $05 005 - RKTPP - Rocket upper part
+	.WORD	K16024		; $05 005 - RKTTP - Rocket upper part
 	.WORD	K20136		; $06 006 - DIAGR - Fill diagonally right-down
 	.WORD	K20144		; $07 007 - DIAGL - Fill diagonally left-down
 	.WORD	K20260		; $08 010 - LADSK - Ladder
@@ -1233,22 +1233,22 @@ K13426:	.WORD	K20120		; $00 000 - HORLN - Fill horizontally W with tile
 	.WORD	K20240		; $0E 016 - LADTN - Wide white ladder
 	.WORD	K20056		; $0F 017 - TLDTN - Joint between the ladder and the mast
 	.WORD	K15226		; $10 020 - CUPB2 - Cupboard
-	.WORD	K16220		; $11 021 - LFTPF - Lift platform bottom
+	.WORD	K16220		; $11 021 - LFTPF - Lift platform bottom, 6x1 tiles
 	.WORD	K15562		; $12 022 - TREEF - Tree leaves small
 	.WORD	K16400		; $13 023 - MOON - Moon
-	.WORD	K16134		; $14 024 - LFFN1 - Rocket wing left top
-	.WORD	K16152		; $15 025 - RTFN1 - Rocket wing right top
+	.WORD	K16134		; $14 024 - LFFN1 - Rocket wing left top, 2x6 tiles
+	.WORD	K16152		; $15 025 - RTFN1 - Rocket wing right top, 2x6 tiles
 	.WORD	K15634		; $16 026 - LFFN2 - Rocket wing element left bottom
 	.WORD	K15670		; $17 027 - RTFN2 - Rocket wing element right bottom
 	.WORD	K15724		; $18 030 - LEFEX
 	.WORD	K15764		; $19 031 - RITEX
 	.WORD	K17736		; $1A 032 - REDOF
 	.WORD	K17754		; $1B 033 - REDON
-	.WORD	K16116		; $1C 034 - LFTRE
+	.WORD	K16116		; $1C 034 - LFTRE - ?? 5x3 tiles
 	.WORD	K16350		; $1D 035 - RADIA
 	.WORD	K20250		; $1E 036 - RADLD
-	.WORD	K16324		; $1F 037 - HIDLD
-	.WORD	K16100		; $20 040 - RTTRE
+	.WORD	K16324		; $1F 037 - HIDLD - ?? 2x2 tiles
+	.WORD	K16100		; $20 040 - RTTRE - ?? 3x2 tiles
 	.WORD	K20230		; $21 041 - GRLAD
 	.WORD	K17640		; $22 042 - LETR1
 	.WORD	K17646		; $23 043 - LETR2
@@ -1332,7 +1332,7 @@ K14642:	.WORD	0			; TVPPC
 ;NOTE: MS0515 version has no WHIGD, YELBX markers
 ;
 ; Room marker $66 146 - TVCON 6x6 tiles
-K14644:	MOVB	#001, K14640
+K14644:	MOVB	#001, K14640		; set TVSWT = 1
 	MOV	#062260, R3
 	MOV	#K14434, R4		; TVCNC
 	MOVB	#006, K01604		; width = 6
@@ -1508,7 +1508,7 @@ K15500:	MOVB	K36214, K01602		; RMDN room level
 	MOV	#127105, R3
 	CALL	K04604			; BUFOM - Draw string as tiles
 	DEC	(SP)
-	JMP	K13422
+	JMP	K13422			; => RETRT
 ;
 K15550:	.ASCIZ	/@LEVEL@X@/
 ;
@@ -1566,50 +1566,50 @@ K16012:	.BYTE	315,000,000
 	.BYTE	317,317,315
 	.EVEN
 ;
-; Room marker $05 005 - RKTPP - Rocket upper part 3x4 tiles
-K16024:	MOV	#070616, R4		; copy from
+; Room marker $05 005 - RKTTP - Rocket upper part 3x4 tiles
+K16024:	MOV	#K70616, R4		; copy from ROKET
 	MOVB	#003, K01604		; width = 3
 	MOV	#000004, R1		; height = 4
 	MOV	#062334, R3		; BUFFB+144.
 	BR	K16432			; Copy tiles
 	NOP1
-; Object in tiles, 5x3 tiles
+; LFTRC: Object in tiles, 5x3 tiles
 K16052:	.BYTE	001,037,040,036,036
 	.BYTE	041,036,036,036,036
 	.BYTE	001,042,043,044,044
-; Object in tiles, 3x2 tiles
+; RTTRC: Object in tiles, 3x2 tiles
 K16071:	.BYTE	047,050,051,036,052,053
 	.EVEN
-; Room marker $20 040 - ??? 3x2 tiles
-K16100:	MOV	#K16071, R4		; copy from
+; Room marker $20 040 - RTTRE - ?? 3x2 tiles
+K16100:	MOV	#K16071, R4		; copy from RTTRC
 	MOV	#000003, R2		; width = 3
 	MOV	#000002, R1		; height = 2
 	BR	K16234			; => SCOBD
-; Room marker $1C 034 - ??? 5x3 tiles
-K16116:	MOV	#K16052, R4		; copy from
+; Room marker $1C 034 - LFTRE - ?? 5x3 tiles
+K16116:	MOV	#K16052, R4		; copy from LFTRC
 	MOV	#000005, R2		; width = 5
 	MOV	#000003, R1		; height = 3
 	BR	K16234			; => SCOBD
-; Room marker $14 024 - Rocket wing left top, 2x6 tiles
-K16134:	MOV	#K16170, R4
+; Room marker $14 024 - LFFN1 - Rocket wing left top, 2x6 tiles
+K16134:	MOV	#K16170, R4		; copy from LFF1C
 	MOV	#000002, R2		; width = 2
 	MOV	#000006, R1		; height = 6
 	BR	K16234			; => SCOBD
-; Room marker $15 025 - Rocket wing right top, 2x6 tiles
-K16152:	MOV	#K16204, R4
+; Room marker $15 025 - RTFN1 - Rocket wing right top, 2x6 tiles
+K16152:	MOV	#K16204, R4		; copy from RTF1C
 	MOV	#000002, R2		; width = 2
 	MOV	#000006, R1		; height = 6
 	BR	K16234			; => SCOBD
-; Rocket wing left top, 2x6 tiles
+; LFF1C: Rocket wing left top, 2x6 tiles
 K16170:	.BYTE	000,366,366,370,370,370,370,370,370,370,321,000
-; Rocket wing right top, 2x6 tiles
+; RTF1C: Rocket wing right top, 2x6 tiles
 K16204:	.BYTE	365,000,370,365,370,370,370,370,370,370,000,320
 ;
-; Room marker $11 021 - LFTPF - Lift platform bottom
-K16220:	MOV	#070602, R4		; PLATF
+; Room marker $11 021 - LFTPF - Lift platform bottom, 6x1 tiles
+K16220:	MOV	#K70602, R4		; copy from PLATF
 	MOV	#000001, R1		; height = 1
 	MOV	#000006, R2		; width = 6
-; SCOBD:
+; SCOBD: Copy tiles; R1 = height, R2 = width, R4 = copy from
 K16234:	MOV	(SP), R0
 	MOVB	(R0)+, K01610		; offset low
 	MOVB	(R0), K01611		; offset high
@@ -1624,25 +1624,24 @@ K16264:	MOVB	(R4)+, (R3)+		; | <
 	ADD	#000040, R3		; | + 32.
 	POP	R2
 	SOB	R1, K16260		; repeat
-	JMP	K13422
-; ??? 3x3 tiles
+	JMP	K13422			; => RETRT
+; RADIC: ??? 3x3 tiles
 K16306:	.BYTE	026,027,030
 	.BYTE	031,032,033
 	.BYTE	034,035,036
-; ??? 2x2 tiles
+; HIDCR: ??? 2x2 tiles
 K16317:	.BYTE	037,037
 	.BYTE	037,037
 	.EVEN
-;
-; Room marker $1F 037 - ??? 2x2 tiles
-K16324:	MOV	#K16317, R4		; copy from
+; Room marker $1F 037 - HIDLD - ??? 2x2 tiles
+K16324:	MOV	#K16317, R4		; copy from HIDCR
 	MOVB	#002, K01604		; width = 2
 	MOV	#000002, R1		; height = 2
 	MOV	#064235, R3
 	BR	K16432			; Copy tiles
-; Room marker $1D 035 - ??? 3x3 tiles
+; Room marker $1D 035 - RADIA - ??? 3x3 tiles
 K16350:	CLRB	<L14472+2>		; clear (DECEN+1)
-	MOV	#K16306, R4		; copy from
+	MOV	#K16306, R4		; copy from RADIC
 	MOVB	#003, K01604		; width = 3
 	MOV	#000003, R1		; height = 3
 	MOV	#064040, R3
@@ -1652,8 +1651,9 @@ K16400:	MOV	#062245, R3
 	CMPB	#001, @#125555
 	BNE	K16466			; => NWUKL
 	MOV	#K16474, R4		; copy from
-	MOVB	#002, K01604		; width = 2
-	MOV	#000002, R1
+	MOV	#000002, R1		; height = 2
+	MOVB	R1, K01604		; width = 2
+	NOP1
 ; Entry point: Copy tiles; K01604 = width, R1 = height, R4 = address to copy from
 K16432:	MOV	#000040, R2		; 32. = row width
 	ADD	#043310, R3		; + base address
@@ -1668,7 +1668,7 @@ K16452:	MOVB	(R4)+, (R3)+		; | < copy tile
 	POP	R5
 ; NWUKL:
 K16466:	DEC	(SP)
-	JMP	K13422
+	JMP	K13422			; => RETRT
 ; Moon in tiles, 2x2 tiles
 K16474:	.BYTE	032,033
 	.BYTE	034,035
@@ -1826,7 +1826,7 @@ K20004:	MOV	R0, (R3)+		; < fill 2 tiles
 	MOV	R0, (R3)+		; | fill 2 tiles
 	MOV	R0, (R3)+		; | fill 2 tiles
 	SOB	R1, K20004		; repeat
-	JMP	K13422
+	JMP	K13422			; => RETRT
 ; Room marker $04 004 - ONECR - Fill one tile
 K20022:	POP	R3
 	MOVB	(R3)+, R0
@@ -1836,7 +1836,7 @@ K20022:	POP	R3
 	MOV	K01606, R3
 	ADD	#043310, R3		; + base address
 	MOVB	R0, (R3)
-	JMP	K13422
+	JMP	K13422			; => RETRT
 ; Room marker $0F 017 - TLDTN
 K20056:	MOV	#000312, R0
 	POP	R3
@@ -1848,7 +1848,7 @@ K20056:	MOV	#000312, R0
 	MOVB	R0, (R3)+
 	INCB	R0
 	MOVB	R0, (R3)
-	JMP	K13422
+	JMP	K13422			; => RETRT
 ; Room marker $00 000 - HORLN - Fill horizontally W with tile
 K20120:	MOV	#000001, R2
 	BR	K20156
@@ -1878,7 +1878,7 @@ K20156:	POP	R0
 K20216:	MOVB	R0, (R3)		; < put tile
 	ADD	R2, R3			; | + offset
 	SOB	R1, K20216		; repeat
-	JMP	K13422
+	JMP	K13422			; => RETRT
 ; Room marker $21 041 - GRLAD - Black on green ladder
 K20230:	MOVB	#054, K01604		; 44.
 	BR	K20266
@@ -1906,7 +1906,7 @@ K20326:	MOVB	R0, (R3)+		; < put tile
 	DECB	R0			; | prev tile
 	ADD	R2, R3			; | + offset
 	SOB	R1, K20326		; repeat
-	JMP	K13422
+	JMP	K13422			; => RETRT
 ; Room marker $09 011 - ROCKS - Supertile, 8x6 tiles
 K20346:	MOV	#L25424, R2		; BUFFB Back tile screen address
 	MOV	#000003, R1
@@ -1933,7 +1933,7 @@ K20422:	MOVB	(R3)+, (R2)+		;   <  copy tile number
 	ADD	#000240, R2
 	SOB	R1, K20356		; repeat
 	DEC	(SP)
-	JMP	K13422
+	JMP	K13422			; => RETRT
 ;
 ; Supertiles and Stashes
 .INCLUDE /S2TILE.MAC/
@@ -2931,7 +2931,7 @@ K31642:	MOVB	000001(R4), R0		; <
 	BEQ	K31662
 	CMPB	R0, #000012
 	BNE	K31706
-K31662:	MOVB	000005(R4), K01602	; room number
+K31662:	MOVB	000005(R4), K01602
 	MOV	#000003, R0
 	XOR	R0, K01602
 	MOVB	K01602, 000005(R4)
@@ -3363,14 +3363,14 @@ K36504:	MOVB	#004, R0		; 4.
 ; ARSED:
 K36510:	MOVB	R0, K37662		; set SPEED
 	MOV	#K36546, R3		; SOMER -> (VECTN+1)
-	MOV	#046352, R2		; SOM1C -> (CHARN+1)
+	MOV	#K46352, R2		; SOM1C -> (CHARN+1)
 	CLRB	K36534			; clear SOMPS
 	JMP	K55246			; => SETVC - set vectors
 ;
 K36534:	.BYTE	0			; SOMPS
 	.EVEN
 ; SOMAN:	SOM1C, SOM2C, SOM3C, SOM4C
-K36536:	.WORD	046352, 046413, 046455, 046517
+K36536:	.WORD	K46352, K46413, 046455, 046517
 ; SOMER: ??? - Vector for (VECTN+1)
 K36546:	MOVB	K36534, R3		; get SOMPS
 	INCB	R3
@@ -3639,7 +3639,7 @@ K40301:	.BYTE	377
 	.BYTE	377, 377, 377, 000
 ;
 ; DRGLI procedure: ??
-K40356:	MOV	#K40276, 047720
+K40356:	MOV	#K40276, 047720		; GLIPS
 	MOV	040276, R3
 	ADD	R1, R3
 	MOV	#000004, R1
@@ -3717,10 +3717,10 @@ K40742:	DECB	K36214			; decr RMDN room level
 	MOV	#177740, R2		; up one level
 	JMP	K54262			; => PIGGS
 ; LEGS procedure
-K41000:	MOVB	046775, K01602		; room number
+K41000:	MOVB	046775, K01602
 	MOV	#000233, R0
 	XOR	R0, K01602
-	MOVB	K01602, 046775		; room number
+	MOVB	K01602, 046775
 	ADD	#000022, <K41150+2>	; + 18.
 	MOVB	K41172, R0		; get LEGP
 	INCB	R0
@@ -3888,8 +3888,8 @@ K50010:	INCB	K01606
 K50062:	.BYTE	6
 	.EVEN
 ;
-	.BLKW	13	;TODO
-K50110:	.BLKW	27			; MANBF
+	.BLKW	12	;TODO
+K50110:	.BLKW	30			; MANBF
 ;
 ; CRUTP: ??? - Vector for (VECTN+1)
 K50170:	CALL	K50274			; FLORQ
@@ -4422,7 +4422,7 @@ K53352:	BIT	#000010, R0		; bit 3 ? kick
 	BNE	K53440			; no => NPOSR
 	MOVB	#376, K17200		; set BIKER = 254.
 	MOV	#K40576, R3		; BIKEP -> (VECTN+1)
-	MOV	#046244, R2		; BIKNC -> (CHARN+1)
+	MOV	#K46244, R2		; BIKNC -> (CHARN+1)
 	MOVB	#375, K17200		; set BIKER = 253.
 	MOVB	#000155, R0		; 109. -> SPEED
 	JMP	K55242			; => SETSP - set SPEED and vectors
@@ -4812,10 +4812,10 @@ K55720:	CALL	K55736			; LEGSW
 	BIT	#000002, R0		; bit 1 ?
 	BR	K55562			; => FLOTQ
 ; LEGSW procedure
-K55736:	MOVB	047313, K01602		; room number
+K55736:	MOVB	047313, K01602
 	MOV	#000007, R0
 	XOR	R0, K01602		; FOOTC
-	MOVB	K01602, 047313		; room number
+	MOVB	K01602, 047313
 	RETURN
 ;
 ; K55764 == ROOMS	Room sequences, 246. rooms
