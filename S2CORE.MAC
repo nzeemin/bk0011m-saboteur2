@@ -31,7 +31,8 @@
 MMODE0 = ^B0001110000000000	; 5:4  -  системный
 MMOD34 = ^B0011110000000000	; 3:4  -  для загрузки
 MMODE1 = ^B0011100000000000	; 3:1  -  основной
-MMODE5 = ^B0001100000000000	; 5:1  -  для рисования на экране at 040000-077777 window
+MMODE5 = ^B0001100000000000	; 5:1  -  для рисования на экране
+MMOD36 = ^B0011111100000000	; 3:6  -  для работы с подготовленными NCHRS+GCHRS
 
 	.=001400
 ; Приходим сюда из загрузчика
@@ -188,8 +189,9 @@ K02106:	BISB	R2, <K02070+2>		; (K02070+2) = [Y5 Y4 Y3 Y2 Y1 Y0  0  0]
 	ADD	#040000, R2		; R2 = screen address
 	ASR	R4
 	RETURN
-K02176:	MOV	#000001, R0		;TODO: not used??
-	RETURN
+
+	NOP3
+	.BLKW	104
 ;
 ; DOPIC procedure: Show the room on the screen
 K02202:	MOV	#K41173, R3		; FFCOL
@@ -216,7 +218,7 @@ K02304:
 	MOVB	(R4), R0
 	BNE	K02322
 	JMP	K04440			; => NDRAW - not drawing this tile now
-
+;
 K02322:	CLR	R0
 	BISB	(R3), R0		; get tile from BUFFB: Back tile screen
 	MOVB	R0, <K04673>		; set BAKCR
@@ -255,83 +257,19 @@ K02450:	BICB	#177407, K04672		; COL
 	BISB	R1, K04672		; COL
 	ASL	R3
 	ASL	R3
-	ASL	R3			; *8.
-	ADD	#K73546, R3		; + GCHRS - tiles base address
-	MOV	#K04662, R2		; PIX buffer address
-	CALL	K36042			; G1DIS
-	MOVB	(R3), R1		; #0
-	MOVB	K07126(R1), R0		; get mask
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	COMB	(R2)
-	BICB	(R2), R0
-	MOVB	R0, (R2)
-	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	BISB	R0, (R2)+
-	MOVB	(R3), R1		; #1
-	MOVB	K07126(R1), R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	COMB	(R2)
-	BICB	(R2), R0
-	MOVB	R0, (R2)
-	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	BISB	R0, (R2)+
-	MOVB	(R3), R1		; #2
-	MOVB	K07126(R1), R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	COMB	(R2)
-	BICB	(R2), R0
-	MOVB	R0, (R2)
-	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	BISB	R0, (R2)+
-	MOVB	(R3), R1		; #3
-	MOVB	K07126(R1), R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	COMB	(R2)
-	BICB	(R2), R0
-	MOVB	R0, (R2)
-	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	BISB	R0, (R2)+
-	MOVB	(R3), R1		; #4
-	MOVB	K07126(R1), R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	COMB	(R2)
-	BICB	(R2), R0
-	MOVB	R0, (R2)
-	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	BISB	R0, (R2)+
-	MOVB	(R3), R1		; #5
-	MOVB	K07126(R1), R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	COMB	(R2)
-	BICB	(R2), R0
-	MOVB	R0, (R2)
-	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	BISB	R0, (R2)+
-	MOVB	(R3), R1		; #6
-	MOVB	K07126(R1), R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	COMB	(R2)
-	BICB	(R2), R0
-	MOVB	R0, (R2)
-	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	BISB	R0, (R2)+
-	MOVB	(R3), R1		; #7
-	MOVB	K07126(R1), R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	COMB	(R2)
-	BICB	(R2), R0
-	MOVB	R0, (R2)
-	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	BISB	R0, (R2)+
-	CALL	K36042			; G1DIS
+	ASL	R3
+	ASL	R3			; *16.
+	ADD	#120000, R3	; БК	; + GCHRS address in memory window
+	TSTB	036037		; БК	; check DIR
+	BEQ	10$		; БК
+	ADD	#3136., R3	; БК	; + offset to mirrored tiles
+10$:	MOV	#K04662, R2		; PIX buffer address
+	MOV	#MMOD36, @#177716	; Подключаем страницу 6
+	.REPT	8.
+	BICB	(R3)+, (R2)		; apply mask
+	BISB	(R3)+, (R2)+		; apply pixels
+	.ENDR
+	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
 ; GRD2:
 K03014:	CLR	R3
 	BISB	@K04660, R3		; get tile from Enemy 1 tile screen
@@ -350,7 +288,7 @@ K03014:	CLR	R3
 	COMB	(R2)
 	BICB	(R2), R0
 	MOVB	R0, (R2)
-	MOVB	(R3)+, R0
+	MOVB	(R3)+, R0		; get pixels
 	CALL	K04634			; REFQ - reflect R0 if DIR
 	BISB	R0, (R2)+
 	MOVB	(R3), R1		; #1
@@ -466,81 +404,19 @@ K03544:	BICB	#177407, K04672		; COL keep PAPER color
 K03560:	MOVB	K41175, K03542		; restore TMPNC -> NJCOL+1
 	ASL	R3
 	ASL	R3
-	ASL	R3			; *8.
-	ADD	#L16744, R3		; + NCHRS
-	MOV	#K04662, R2		; PIX addr
-	MOVB	(R3), R1
-	MOVB	K07126(R1), R0		; get mask
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	COMB	(R2)
-	BICB	(R2), R0
-	MOVB	R0, (R2)
-	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	BISB	R0, (R2)+
-	MOVB	(R3), R1
-	MOVB	K07126(R1), R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	COMB	(R2)
-	BICB	(R2), R0
-	MOVB	R0, (R2)
-	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	BISB	R0, (R2)+
-	MOVB	(R3), R1
-	MOVB	K07126(R1), R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	COMB	(R2)
-	BICB	(R2), R0
-	MOVB	R0, (R2)
-	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	BISB	R0, (R2)+
-	MOVB	(R3), R1
-	MOVB	K07126(R1), R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	COMB	(R2)
-	BICB	(R2), R0
-	MOVB	R0, (R2)
-	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	BISB	R0, (R2)+
-	MOVB	(R3), R1
-	MOVB	K07126(R1), R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	COMB	(R2)
-	BICB	(R2), R0
-	MOVB	R0, (R2)
-	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	BISB	R0, (R2)+
-	MOVB	(R3), R1
-	MOVB	K07126(R1), R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	COMB	(R2)
-	BICB	(R2), R0
-	MOVB	R0, (R2)
-	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	BISB	R0, (R2)+
-	MOVB	(R3), R1
-	MOVB	K07126(R1), R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	COMB	(R2)
-	BICB	(R2), R0
-	MOVB	R0, (R2)
-	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	BISB	R0, (R2)+
-	MOVB	(R3), R1
-	MOVB	K07126(R1), R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	COMB	(R2)
-	BICB	(R2), R0
-	MOVB	R0, (R2)
-	MOVB	(R3)+, R0
-	CALL	K04634			; REFQ - reflect R0 if DIR
-	BISB	R0, (R2)+
+	ASL	R3
+	ASL	R3			; *16.
+	ADD	#100000, R3	; БК	; + NCHRS addr in memory window
+	TSTB	K36264		; БК	; check DIR
+	BEQ	10$		; БК
+	ADD	#3936., R3	; БК	; + offset to mirrored tiles
+10$:	MOV	#K04662, R2		; PIX addr
+	MOV	#MMOD36, @#177716	; Подключаем страницу 6
+	.REPT	8.
+	BICB	(R3)+, (R2)		; apply mask
+	BISB	(R3)+, (R2)+		; apply pixels
+	.ENDR
+	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
 ; OBJDA:
 K04104:	MOV	#K04672, R3		; get COL
 	MOV	#000020, R0		; 16.
@@ -653,7 +529,8 @@ K04544:	MOV	#K04662, R2		; PIX addr
 	;MOVB	#060, (R2)		;NOTE: Атрибут, не нужно на БК
 	BR	K04274			; => DRAW
 	NOP2
-	NOP2
+	NOP1
+	.BLKW	110	;NOTE: Свободное место
 ;
 ; BUFOM procedure: Draw string as tiles; R2 = string, R1 = length
 K04604:	MOV	R1, R5
@@ -680,6 +557,7 @@ K04660:	.WORD	0			; GD2PT: Address in Enemy 1 tile screen
 ;
 K04662:	.BLKB	10			; PIX
 	NOP3
+	NOP1
 ;
 K04672:	.BYTE	2			; COL
 K04673:	.BYTE	0			; BAKCR
@@ -2618,7 +2496,7 @@ K27732:	POP	R3
 K27734:	DECB	(R3)
 	BNE	K27744
 	CLRB	000013(R4)
-K27744:	MOV	#076606, R3
+K27744:	MOV	#K76606, R3		; GDPNC
 	JMP	K30450			; => ENDGP
 ; FFIRE:
 K27754:	.BYTE	243, 244
@@ -2673,7 +2551,7 @@ K30174:	INCB	R5			;!!MUT-CMD!!  INCB R5 / DECB R5
 K30200:	DECB	K26670
 	BNE	K30214
 	MOVB	#007, 000013(R4)
-K30214:	MOV	#076606, R3
+K30214:	MOV	#K76606, R3		; GDPNC
 	BR	K30450
 ;
 K30222:	MOVB	#000010, 000013(R4)
@@ -2719,14 +2597,14 @@ K30400:	MOV	#K77333, R3		; GKIKC
 	BR	K30450
 ; GDLLP:
 K30406:	MOVB	#003, 000013(R4)
-	MOV	#076657, R3
+	MOV	#K76657, R3		; DGLLC
 	BR	K30450
 ;
 K30422:	CALL	L15650			; Sound CRUNCH noise
 	MOVB	#006, R1		; 6.
 	CALL	L14472			; DECEN
 	MOVB	#001, 000013(R4)
-	MOV	#076757, R3
+	MOV	#K76757, R3
 ; ENDGP:
 K30450:	MOV	R3, <K30534+2>
 	MOV	#036037, R3
@@ -3818,7 +3696,7 @@ K41305:	.BYTE	070, 001, 010		; '8' - up
 	.BYTE	067, 000, 024		; '7' - down + fire
 	.BYTE	071, 000, 024		; '9' - down + fire
 ;
-;K41342:
+;K41342: OCHRS:
 .INCLUDE /S242E2.MAC/
 ;
 ; BUFCL procedure: Fill Ninja tile screen

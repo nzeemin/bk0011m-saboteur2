@@ -20,6 +20,7 @@ echo 	.ASCII /REV.%REVISION% %DATESTAMP%/ > VERSIO.MAC
 @if exist S2CORE.SAV del S2CORE.SAV
 @if exist S2CORE.COD del S2CORE.COD
 @if exist S2CORE.LZS del S2CORE.LZS
+@if exist S2CHRS.LZS del S2CHRS.LZS
 @if exist S2BOOT.LST del S2BOOT.LST
 @if exist S2BOOT.OBJ del S2BOOT.OBJ
 @if exist S2BOOT.SAV del S2BOOT.SAV
@@ -65,9 +66,15 @@ dir /-c S2CORE.LZS|findstr /R /C:"S2CORE.LZS"
 call :FileSize S2CORE.LZS
 set "codelzsize=%fsize%"
 rem echo Compressed size %codelzsize%
-
 rem Reuse VERSIO.MAC to pass parameters into S2BOOT.MAC
 echo S2LZSZ = %codelzsize%. >> VERSIO.MAC
+
+tools\lzsa3.exe S2CHRS.DAT S2CHRS.LZS
+dir /-c S2CHRS.LZS|findstr /R /C:"S2CHRS.LZS"
+call :FileSize S2CHRS.LZS
+set "chrslzsize=%fsize%"
+rem echo Compressed size %chrslzsize%
+echo S2CZSZ = %chrslzsize%. >> VERSIO.MAC
 
 %rt11exe% MACRO/LIST:DK: S2BOOT.MAC
 
