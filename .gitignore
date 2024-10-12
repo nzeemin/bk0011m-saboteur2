@@ -7,3 +7,7 @@
 /*.BIN
 /VERSIO.MAC
 /x-*
+/SpriteRotate/bin
+/SpriteRotate/obj
+/SpriteRotate/*.suo
+/SpriteRotate/.idea
