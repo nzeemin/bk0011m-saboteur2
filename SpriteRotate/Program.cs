@@ -8,7 +8,7 @@ class Program
     {
         PrepareNchrs();
         PrepareGchrs();
-        PrepareBchrs();
+        PrepareBchrsOchrs();
         Console.WriteLine("DONE");
     }
 
@@ -38,7 +38,7 @@ class Program
                     Color color2 = bmpTiles.GetPixel(basex + 9 + (7 - x), basey + h);
                     int index2 = ((color2.ToArgb() & 0xffffff) == 0xB22222) ? 3 : 0;
                     mm = mm << 2;  mm |= index2;
-                    mmr = mmr >> 2;  mmr |= index << 14;
+                    mmr = mmr >> 2;  mmr |= index2 << 14;
                 }
                 
                 bytes[offset + 0] = (byte)(mm & 0xff);
@@ -85,7 +85,7 @@ class Program
                     Color color2 = bmpTiles.GetPixel(basex + 9 + (7 - x), basey + h);
                     int index2 = ((color2.ToArgb() & 0xffffff) == 0xB22222) ? 3 : 0;
                     mm = mm << 2;  mm |= index2;
-                    mmr = mmr >> 2;  mmr |= index << 14;
+                    mmr = mmr >> 2;  mmr |= index2 << 14;
                 }
                 
                 bytes[offset + 0] = (byte)(mm & 0xff);
@@ -107,21 +107,48 @@ class Program
     }
     
     // Prepare background tiles, 255 tiles 8x10
-    static void PrepareBchrs()
+    // Prepare foregraund tiles, 142 tiles 8x10
+    static void PrepareBchrsOchrs()
     {
-        Bitmap bmpTiles = new Bitmap(@"..\..\..\bktiles.png");
         
         byte[] bytes = new byte[16384];
+        
+        var bmpBTiles = new Bitmap(@"..\..\..\bktiles.png");
         for (int tile = 0; tile < 255; tile++)
         {
             int basex = 8 + (tile % 16) * 10;
             int basey = 8 + (tile / 16) * 12;
-            var words = DecodeTileFromBitmap(bmpTiles, basex, basey);
+            var words = DecodeTileFromBitmap(bmpBTiles, basex, basey);
             var offset = tile * 20;
             for (int i = 0; i < 10; i++)
             {
                 bytes[offset + i * 2 + 0] = (byte)(words[i] & 0xff);
                 bytes[offset + i * 2 + 1] = (byte)(words[i] >> 8);
+            }
+        }
+        
+        var bmpOTiles = new Bitmap(@"..\..\..\ontiles.png");
+        for (int tile = 0; tile < 146; tile++)
+        {
+            int basex = 8 + (tile % 16) * 19;
+            int basey = 8 + (tile / 16) * 12;
+            var words = DecodeTileFromBitmap(bmpOTiles, basex, basey);
+            var offset = 5120 + tile * 40;
+            for (int i = 0; i < 10; i++)
+            {
+                int mm = 0;
+                for (int x = 0; x < 8; x++)
+                {
+                    Color color2 = bmpOTiles.GetPixel(basex + 9 + (7 - x), basey + i);
+                    int index2 = ((color2.ToArgb() & 0xffffff) == 0xB22222) ? 3 : 0;
+                    mm = mm << 2;  mm |= index2;
+                }
+                mm = mm ^ 0xffff;  // Invert the mask
+                
+                bytes[offset + i * 4 + 0] = (byte)(mm & 0xff);
+                bytes[offset + i * 4 + 1] = (byte)(mm >> 8);
+                bytes[offset + i * 4 + 2] = (byte)(words[i] & 0xff);
+                bytes[offset + i * 4 + 3] = (byte)(words[i] >> 8);
             }
         }
         
