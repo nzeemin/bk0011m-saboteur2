@@ -205,8 +205,8 @@ class Program
 
     static int ColorToIndex(Color color)
     {
-        if ((color.ToArgb() & 0xffffff) == 0x00ffff) return 3;  // Cyan
-        if ((color.ToArgb() & 0xffffff) == 0xff00ff) return 2;  // Magenta
+        if ((color.ToArgb() & 0xffffff) == 0x00ffff) return 2;  // Cyan
+        if ((color.ToArgb() & 0xffffff) == 0xff00ff) return 3;  // Magenta
         if ((color.ToArgb() & 0xffffff) == 0x0000ff) return 1;  // Blue
         return 0;
     }

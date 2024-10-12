@@ -36,6 +36,10 @@ MMOD36 = ^B0011111100000000	; 3:6  -  для BCHRS+OCHRS
 MMOD32 = ^B0011101000000000	; 3:2  -  для NCHRS
 MMOD37 = ^B0011110100000000	; 3:7  -  для S2GCHR
 
+; Значения регистра управления палитрами
+;          ST..____........
+PMODEG = ^B0000111000000000	; Экран стр.5, таймер отключен, палитра 14
+
 	.=001400
 ; Приходим сюда из загрузчика
 ; Уже включен основной режим памяти MMODE1
@@ -192,7 +196,7 @@ K02106:	BISB	R2, <K02070+2>		; (K02070+2) = [Y5 Y4 Y3 Y2 Y1 Y0  0  0]
 	ASR	R4
 	RETURN
 
-	.BLKW	255
+	.BLKW	77
 ;
 ; DOPIC procedure: Show the room on the screen
 K02202:	MOV	#K41173, R3		; FFCOL
@@ -289,6 +293,7 @@ K03014:	CLR	R3
 	CMP	R3, #377		; tile 255. ?
 	BEQ	K03364			; yes => NINJA
 	BICB	#177407, K04672		; COL := COL AND 248.
+	ASL	R3
 	ASL	R3
 	ASL	R3
 	ASL	R3
@@ -476,8 +481,6 @@ K04544:	MOV	#K04662, R2		; PIX addr
 	.ENDR
 	CLR	(R2)+
 	BR	K04274			; => DRAW
-
-	.BLKW	4	;NOTE: Свободное место
 ;
 ; BUFOM procedure: Draw string as tiles; R2 = string, R1 = length
 K04604:	MOV	R1, R5
@@ -489,13 +492,6 @@ K04606:	MOVB	(R2)+, R0		; <
 K04624:	MOVB	#001, -(R3)		; <
 	SOB	R5, K04624		; repeat
 K04632:	RETURN
-;
-; REFQ procedure: if DIR != 0 then mirror byte R0
-K04634:	TSTB	K36264			; check DIR
-	BEQ	K04650			; = 0 ? => don't mirroring
-	MOVB	R0, R1
-	MOVB	L23024(R1), R0		; byte mirroring
-K04650:	RETURN
 ;
 K04652:	.WORD	0			; NINPT: Address in Ninja tile screen
 K04654:	.WORD	0			; OBJPT: Address in Front tile screen
@@ -577,13 +573,13 @@ K05164:
 	POP	R1
 	POP	R3
 	RETURN
-
-	.BLKW	3	;NOTE: Свободное место
 ;
 ; Table of addrs: Nothing, Shuriken, Knife, Empty Box, Question, Pipe, Question, Wrench
 K05254:	.WORD	K05274, K05450, K05624, K06000, K06154, K06504, K06154, K06330
 ; Item pictograms 32x24, 108. bytes each * 7 = 756. bytes total
 .INCLUDE /S2ITEM.MAC/
+;TODO: Подготовить тут место под расширение S2ITEM в цветные картинки, нужно 446 слов
+	.BLKW	373	;NOTE: Свободное место
 
 START:
 ;K01206:	MOV	#004000, <K01224+2>	; set filler
@@ -611,8 +607,7 @@ K06722:	;JMP	K07326			; OUTBF Go to Menu
 K07326:	CALL	L07634			; INITHI Draw Ninja for Menu
 	JMP	L11224			; CLAW1 Entering Menu
 ;
-;K06726:
-.INCLUDE /S20DD6.MAC/
+;NOTE: Таблица масок K06726 удалена, стала не нужна
 ;
 K07336:	.ASCII	/PRESS ANY KEY TO CONTINUE/
 ; Missions info
@@ -815,7 +810,7 @@ K11626:	SOB	R1, K11600		;   repeat
 	BR	K11516			; repeat
 ; Procedure: Show one tile of the indicator panel
 K11632:
-	PUSH	R5
+	;PUSH	R5
 	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
 	MOV	(R3), (R2)		; #0
 	MOV	(R3)+, 000100(R2)	; #1 Дублируем первую строку тайла
@@ -828,7 +823,7 @@ K11632:
 	MOV	(R3), 001000(R2)	; #8
 	MOV	(R3)+, 001100(R2)	; #9 Дублируем последнюю строку тайла
 	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
-	POP	R5
+	;POP	R5
 K11766:	RETURN
 ;
 ; PANDA - Indicator panel tile sequence
@@ -839,7 +834,7 @@ K11772:	.BYTE	010,021,004,016,021,016,016,021,005,016,021,004,011,014,022,004
 	.BYTE	023,016,014,022,005,014,022,004,014,012,021,004,017,021,016,017
 	.BYTE	021,005,017,021,004,013,377
 	.EVEN
-; PANCR - Indicator panel tiles, 9 bytes each
+; PANCR - Indicator panel tiles
 K12121:	.WORD	000000, 177400, 052700, 176560, 001534, 000334, 000334, 000334
 	.WORD	000000, 177777, 052525, 177777, 000000, 000000, 000000, 000000
 	.WORD	000000, 000377, 001525, 006577, 032700, 033400, 033400, 033400
@@ -870,7 +865,7 @@ K12423:	.ASCII	/PAY $0000000 /		; MONEY
 K12440:	.ASCIZ	/XXXXXXXXXXX/		; NAME
 	.EVEN
 
-	.BLKW	23	;NOTE: Свободное место
+	.BLKW	25	;NOTE: Свободное место
 ;
 ; Starting the game, indicator panel frame is already shown
 ; NDPAN:
@@ -4948,7 +4943,7 @@ MENUTB:	.WORD	113, L13146		; 'K' - KEYBOARD
 	.WORD	123, L11456		; 'S' - START GAME
 ;	.WORD	130, FNCORE		; 'X' - EXIT
 	.WORD	0
-	NOP2
+	NOP1
 ;
 ; Start Game selected
 L11456:	POP	R1
@@ -4956,12 +4951,13 @@ L11456:	POP	R1
 ;
 ; 'P' - PALETTE selected in Menu
 MENPAL:
-	NOP2	;MOV	PALET, R0
-	NOP2	;ADD	#400, R0
-	NOP2	;BIC	#^B1111000011111111, R0
-	NOP2	;MOV	R0, @#177662
-	NOP2	;MOV	R0, PALET
+	MOV	PALET, R0
+	ADD	#400, R0
+	BIC	#^B1111000011111111, R0
+	MOV	R0, @#177662
+	MOV	R0, PALET
 	BR	L11224			; Return to Menu
+PALET:	.WORD	0
 ;
 ; MISSN: Alter Mission selected
 L11476:	CALL	L10320			; CLSLF Clear Menu left part
