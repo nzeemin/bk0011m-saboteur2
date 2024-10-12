@@ -9,6 +9,7 @@ class Program
         PrepareNchrs();
         PrepareGchrs();
         PrepareBchrsOchrs();
+        PreparePanelTiles();
         Console.WriteLine("DONE");
     }
 
@@ -159,10 +160,33 @@ class Program
         Console.WriteLine("S2TILE.DAT saved");
     }
 
-    static UInt16[] DecodeTileFromBitmap(Bitmap bmp, int basex, int basey)
+    static void PreparePanelTiles()
     {
-        UInt16[] words = new UInt16[10];
-        for (int i = 0; i < 10; i++)
+        Bitmap bmpTiles = new Bitmap(@"..\..\..\pantiles.png");
+
+        FileStream fs = new FileStream("S2PANC.MAC", FileMode.Create);
+        StreamWriter writer = new StreamWriter(fs);
+        writer.WriteLine("; START OF S2PANC.MAC");
+        writer.WriteLine();
+
+        for (int tile = 0; tile < 20; tile++)
+        {
+            int basex = 8 + (tile % 16) * 10;
+            int basey = 8 + (tile / 16) * 12;
+            var words = DecodeTileFromBitmap(bmpTiles, basex, basey, 8);
+            WriteWordArrayDump(writer, words);
+        }
+
+        writer.WriteLine();
+        writer.WriteLine("; END OF S2PANC.MAC");
+        writer.Flush();
+        Console.WriteLine("S2PANC.MAC saved");
+    }
+    
+    static UInt16[] DecodeTileFromBitmap(Bitmap bmp, int basex, int basey, int lines = 10)
+    {
+        var words = new UInt16[lines];
+        for (int i = 0; i < lines; i++)
         {
             int bb = 0;
             for (int x = 0; x < 8; x++)
@@ -185,5 +209,33 @@ class Program
         if ((color.ToArgb() & 0xffffff) == 0xff00ff) return 2;  // Magenta
         if ((color.ToArgb() & 0xffffff) == 0x0000ff) return 1;  // Blue
         return 0;
+    }
+    
+    static void WriteWordArrayDump(StreamWriter file, UInt16[] array)
+    {
+        for (int offset = 0; offset < array.Length; offset++)
+        {
+            if (offset % 8 == 0)
+                file.Write("\t.WORD\t");
+            var value = array[offset];
+            file.Write($"{EncodeOctalString2(value)}");
+            if (offset % 8 == 7 || offset + 1 >= array.Length)
+                file.WriteLine();
+            else
+                file.Write(", ");
+        }
+    }
+    
+    static string EncodeOctalString2(UInt16 x)
+    {
+        return string.Format(
+            @"{0}{1}{2}{3}{4}{5}",
+            ((x >> 15) & 7),
+            ((x >> 12) & 7),
+            ((x >> 9) & 7),
+            ((x >> 6) & 7),
+            ((x >> 3) & 7),
+            (x & 7)
+        );
     }
 }
