@@ -13,9 +13,9 @@ class Program
         Console.WriteLine("DONE");
     }
 
-    // Prepare Ninja tiles, 246 tiles 8x8 with mask
+    // Prepare Ninja tiles, 246 tiles 8x8, no mask
     // At 0 usual tiles: mask word, pixels word
-    // At 246 * 4 * 8 = 7872 mirrored tiles
+    // At 246 * 2 * 8 = 3936: mirrored tiles
     static void PrepareNchrs()
     {
         Bitmap bmpTiles = new Bitmap(@"..\..\..\njtiles.png");
@@ -27,29 +27,29 @@ class Program
             int basey = 8 + (tile / 16) * 10;
             for (int h = 0; h < 8; h++)
             {
-                int offset = tile * 4 * 8 + h * 4;
-                int offset2 = 7872 + offset;
-                int bb = 0, bbr =0, mm = 0, mmr = 0;
+                int offset = tile * 2 * 8 + h * 2;
+                int offset2 = 3936 + offset;
+                int bb = 0, bbr = 0; //mm = 0, mmr = 0;
                 for (int x = 0; x < 8; x++)
                 {
                     Color color = bmpTiles.GetPixel(basex + (7 - x), basey + h);
                     int index = ((color.ToArgb() & 0xffffff) == 0x000000) ? 3 : 0;
                     bb = bb << 2;  bb |= index;
                     bbr = bbr >> 2;  bbr |= index << 14;
-                    Color color2 = bmpTiles.GetPixel(basex + 9 + (7 - x), basey + h);
-                    int index2 = ((color2.ToArgb() & 0xffffff) == 0xB22222) ? 3 : 0;
-                    mm = mm << 2;  mm |= index2;
-                    mmr = mmr >> 2;  mmr |= index2 << 14;
+                    //Color color2 = bmpTiles.GetPixel(basex + 9 + (7 - x), basey + h);
+                    //int index2 = ((color2.ToArgb() & 0xffffff) == 0xB22222) ? 3 : 0;
+                    //mm = mm << 2;  mm |= index2;
+                    //mmr = mmr >> 2;  mmr |= index2 << 14;
                 }
                 
-                bytes[offset + 0] = (byte)(mm & 0xff);
-                bytes[offset + 1] = (byte)(mm >> 8);
-                bytes[offset + 2] = (byte)(bb & 0xff);
-                bytes[offset + 3] = (byte)(bb >> 8);
-                bytes[offset2 + 0] = (byte)(mmr & 0xff);
-                bytes[offset2 + 1] = (byte)(mmr >> 8);
-                bytes[offset2 + 2] = (byte)(bbr & 0xff);
-                bytes[offset2 + 3] = (byte)(bbr >> 8);
+                //bytes[offset + 0] = (byte)(mm & 0xff);
+                //bytes[offset + 1] = (byte)(mm >> 8);
+                bytes[offset + 0] = (byte)(bb & 0xff);
+                bytes[offset + 1] = (byte)(bb >> 8);
+                //bytes[offset2 + 0] = (byte)(mmr & 0xff);
+                //bytes[offset2 + 1] = (byte)(mmr >> 8);
+                bytes[offset2 + 0] = (byte)(bbr & 0xff);
+                bytes[offset2 + 1] = (byte)(bbr >> 8);
             }
         }
         
