@@ -57,11 +57,14 @@ set "codesize=%codesize:~49,5%"
 rem echo Code limit %codesize% words
 set /a codesize="%codesize% * 2"
 powershell gc S2CORE.SAV -Encoding byte -TotalCount %codesize% ^| sc S2CORE.CO0 -Encoding byte
-set /a codesize="%codesize% - 768"
+set /a codesize="%codesize% - 896"
 powershell gc S2CORE.CO0 -Encoding byte -Tail %codesize% ^| sc S2CORE.COD -Encoding byte
 del S2CORE.CO0
 rem echo Code size %codesize% bytes
+echo.
 dir /-c S2CORE.COD|findstr /R /C:"S2CORE.COD"
+echo.
+dir /-c S2SCRN.LZS|findstr /R /C:"S2SCRN.LZS"
 
 tools\lzsa3.exe S2CORE.COD S2CORE.LZS
 dir /-c S2CORE.LZS|findstr /R /C:"S2CORE.LZS"
