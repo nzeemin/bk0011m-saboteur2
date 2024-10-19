@@ -6,12 +6,127 @@ class Program
 {
     static void Main(string[] args)
     {
+        PrepareNinjaForMenu();
         PrepareNchrs();
         PrepareGchrs();
         PrepareBchrsOchrs();
         PreparePanelTiles();
         PreparePanelItems();
         Console.WriteLine("DONE");
+    }
+
+    static void PrepareNinjaForMenu()
+    {
+        Bitmap bmp = new Bitmap(@"..\..\..\bkninja.png");
+
+        UInt16[] words = new UInt16[11 * 240];
+        for (int w = 0; w < 11; w++)
+        {
+            for (int h = 0; h < 240; h++)
+            {
+                int basex = w * 8;
+                int basey = h;
+                int bb = 0;
+                for (int x = 0; x < 8; x++)
+                {
+                    Color color = bmp.GetPixel(basex + (7 - x), basey);
+                    int index = ColorToIndex(color);
+                    bb = bb << 2;
+                    bb |= index;
+                }
+                words[w * 240 + h] = (UInt16)bb;
+            }
+        }
+        
+        // RLE compression
+        var list = new List<UInt16>();
+        int xcount = 0, rcount = 0;
+        for (int i = 0; i < words.Length; i++)
+        {
+            var w = words[i];
+            var wprev = i > 0 ? words[i - 1] : (UInt16)0;
+            if (w == wprev)
+            {
+                rcount++;
+                if (rcount > 0) // two or more same value, we're in repeat mode
+                {
+                    if (xcount > 1) // put sequence in output
+                    {
+                        int start = i - xcount;
+                        int length = xcount - rcount;
+                        list.Add((UInt16)length);
+                        for (int j = 0; j < length; j++)
+                            list.Add(words[start + j]);
+                    }
+                    xcount = 0;
+                    continue;
+                }
+            }
+            else  // not the same value
+            {
+                if (rcount >= 1) // put repeats in output
+                {
+                    list.Add((UInt16)((rcount + 1) | 0x8000));
+                    list.Add(wprev);
+                    rcount = 0;
+                    xcount = 0;
+                }
+            }
+            xcount++;
+        }
+        if (rcount > 0) // put repeats in output
+        {
+            UInt16 wlast = words[^1];
+            list.Add((UInt16)((rcount + 1) | 0x8000));
+            list.Add(wlast);
+        }
+        list.Add(0);  // end of sequence
+        Console.WriteLine($"S2NMNU sequence compressed: {words.Length} -> {list.Count} words");
+        
+        // Self-test: decode RLE and compare
+        int pos = 0;
+        int wpos = 0;
+        while (pos < list.Count)
+        {
+            var c = list[pos];  pos++;
+            if ((c & 0x8000) == 0)  // copy
+            {
+                //Console.WriteLine($"At {pos - 1}: Copy {c}");
+                for (int j = 0; j < c; j++)
+                {
+                    var w = list[pos];  pos++;
+                    if (words[wpos] != w)
+                        throw new InvalidOperationException($"Unexpected decoding copy at position {pos - 1}/{wpos}: have {w} expected {words[wpos]}");
+                    wpos++;
+                }
+            }
+            else  // repeat
+            {
+                var w = list[pos]; pos++;
+                c = (UInt16)(c & 0x7fff);
+                //Console.WriteLine($"At {pos - 1}: Repeat {c} {w}");
+                for (int j = 0; j < c; j++)
+                {
+                    if (words[wpos] != w)
+                        throw new InvalidOperationException($"Unexpected decoding repeat at position {pos - 1}/{wpos}: have {w} expected {words[wpos]}");
+                    wpos++;
+                }
+            }
+        }
+        
+        FileStream fs = new FileStream("S2NMNU.MAC", FileMode.Create);
+        StreamWriter writer = new StreamWriter(fs);
+        writer.WriteLine("; START OF S2NMNU.MAC");
+        writer.WriteLine();
+        writer.WriteLine("; Ninja for Menu, compressed");
+        writer.Write("L04120:");
+        
+        WriteWordArrayDump(writer, list.ToArray());
+        
+        writer.WriteLine();
+        writer.WriteLine("; END OF S2NMNU.MAC");
+        writer.Flush();
+        Console.WriteLine("S2NMNU.MAC saved");
     }
 
     // Prepare Ninja tiles, 246 tiles 8x8, no mask
@@ -246,8 +361,10 @@ class Program
 
     static int ColorToIndex(Color color)
     {
+        if ((color.ToArgb() & 0xffffff) == 0xffffff) return 2;  // White
         if ((color.ToArgb() & 0xffffff) == 0x00ffff) return 2;  // Cyan
         if ((color.ToArgb() & 0xffffff) == 0xff00ff) return 3;  // Magenta
+        if ((color.ToArgb() & 0xffffff) == 0xff0000) return 3;  // Red
         if ((color.ToArgb() & 0xffffff) == 0x0000ff) return 1;  // Blue
         return 0;
     }

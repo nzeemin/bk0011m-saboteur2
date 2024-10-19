@@ -4563,7 +4563,7 @@ K60677 = K60640 + 37			; LFT3 lift position byte: 377 = DOWN, 0 = UP
 ;
 .INCLUDE /S2SPRT.MAC/
 ;
-	.BLKW	1147.	;NOTE: Free space
+	.BLKW	595.	;NOTE: Free space
 ;
 .INCLUDE /S2NMNU.MAC/
 ;
@@ -4572,89 +4572,37 @@ K60677 = K60640 + 37			; LFT3 lift position byte: 377 = DOWN, 0 = UP
 .INCLUDE /S2FONT.MAC/
 
 ; INITHI procedure: Draw Ninja for Menu
+; RLE sequence decoding onto the screen
 L07634:	MOV	#L04120, R3		; HSPCD
-	MOV	#L24324, R2		; BUFFD Address where prepared picture will be placed
-L07644:	MOVB	(R3), R0		; <
-	CMPB	R0, #173		; 123.
-	BEQ	L07710			; exit => DRWPC
-	CMPB	R0, #352		; 234.
-	BEQ	L07676			; => XPAND
-	MOV	#000001, R1
-L07666:	MOVB	R0, (R2)+		; <
-	SOB	R1, L07666		; repeat
-	INC	R3
-	BR	L07644			; repeat
-L07676:	INC	R3
-	CLR	R1
-	BISB	(R3)+, R1
-	MOVB	(R3), R0
-	BR	L07666
-; DRWPC:
-L07710:	PUSH	R4
-	MOV	#040052, R3
-	MOV	#L24324, R2		; BUFFD Address with prepared picture
+	MOV	#040052, R2		; screen address
+	MOV	#240., R4		; 240. lines
 	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
-	NOP3
-	MOV	#000013, R1
-L07742:	MOV	#000030, R4		; <
-	PUSH	R3
-L07750:	MOVB	(R2)+, R5		;   < #0
-	ASL	R5
-	MOV	PXCONH(R5), (R3)
-	ADD	#000100, R3
-	MOVB	(R2)+, R5		;     #1
-	ASL	R5
-	MOV	PXCONH(R5), (R3)
-	ADD	#000100, R3
-	MOVB	(R2)+, R5		;     #2
-	ASL	R5
-	MOV	PXCONH(R5), (R3)
-	ADD	#000100, R3
-	MOVB	(R2)+, R5		;     #3
-	ASL	R5
-	MOV	PXCONH(R5), R5
-	MOV	R5, (R3)
-	ADD	#000100, R3
-	MOV	R5, (R3)		;     дублируем строку в середине
-	ADD	#000100, R3
-	MOVB	(R2)+, R5		;     #4
-	ASL	R5
-	MOV	PXCONH(R5), (R3)
-	ADD	#000100, R3
-	MOVB	(R2)+, R5		;     #5
-	ASL	R5
-	MOV	PXCONH(R5), (R3)
-	ADD	#000100, R3
-	MOVB	(R2)+, R5		;     #6
-	ASL	R5
-	MOV	PXCONH(R5), (R3)
-	ADD	#000100, R3
-	MOVB	(R2)+, R5		;     #7
-	ASL	R5
-	MOV	PXCONH(R5), R5
-	MOV	R5, (R3)
-	ADD	#000100, R3
-	MOV	R5, (R3)		;     дублируем строку в конце
-	ADD	#000100, R3
-	SOB	R4, L07750		; | repeat
-	POP	R3
-	TST	(R3)+
-	SOB	R1, L07742		; repeat
-	NOP2	;MOV	#040011, R3
-	MOV	#130424, R2
-	MOV	#000030, R1
-L10054:	MOV	#000040, R4		; <
-L10060:		;PUSH	R3			; | <
-L10062:	;NOTE: Удалил
-		;POP	R3
-L10140:	;NOTE: Удалил
-		;SOB	R4, L10060		;   repeat
-		;ADD	#001100, R3
-	NOP1	;SOB	R1, L10054		; repeat
-	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
-	POP	R4
+10$:	MOV	(R3)+, R1		; <
+	BEQ	50$			; => exit
+	BMI	30$			; => XPAND
+20$:	MOV	(R3)+, (R2)		; <  copy word
+	ADD	#000100, R2
+	DEC	R4
+	BNE	26$
+	ADD	#<2-36000>, R2
+	MOV	#240., R4		; 240. lines
+26$:	SOB	R1, 20$			; repeat
+	BR	10$			; continue
+30$:	BIC	#100000, R1
+	MOV	(R3)+, R0		; get word to repeat
+32$:	MOV	R0, (R2)		; <
+	ADD	#000100, R2
+	DEC	R4
+	BNE	36$
+	ADD	#<2-36000>, R2
+	MOV	#240., R4		; 240. lines
+36$:	SOB	R1, 32$			; repeat
+	BR	10$			; continue
+50$:	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
+;
 	JMP	L10320			; CLSLF Clear Menu left part, and return
-	NOP1
+;
+	.BLKW	72.	;NOTE: Free space
 ;
 ; GTBAK procedure
 L10200:	MOV	#K50110, R3		; MANBF
@@ -4724,7 +4672,13 @@ K01254:	MOV	R0, (R5)+		; <  #0
 	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
 	RETURN
 ;
-	.BLKW	39.	;NOTE: Free space
+; PLFHN procedure: MONEY up 500.
+L15506:	MOV	#000372, R1		; 250.
+	CALL	L10244			; MONUP
+	MOV	#000372, R1		; 250.
+	BR	L10244			; MONUP
+;
+	.BLKW	32.	;NOTE: Free space
 
 L10560:	.ASCIZ	/                     /	; SPCHR 21. space char
 ;
@@ -4828,15 +4782,18 @@ L11224:	CALL	L10320			; CLSLF Clear Menu left part
 	MOV	#000020, R1		; 16.
 	CALL	PRINSP			; PRINT string "R  REDEFINE KEYS"
 	.WORD	044043			; screen coords
+	MOV	#10., R1		; 10.
+	CALL	PRINSP			; PRINT string "P  PALETTE"
+	.WORD	044203			; screen coords
 	MOV	#000020, R1		; 16.
 	CALL	PRINSP			; PRINT string "M  ALTER MISSION"
 	.WORD	044303			; screen coords
 	MOV	#000015, R1		; 13.
 	CALL	PRINSP			; PRINT string "S  START GAME"
 	.WORD	050003			; screen coords
-	MOV	#000007, R1		; 7.
-	CALL	PRINSP			; PRINT string "X  EXIT"
-	.WORD	050203			; screen coords
+	;MOV	#000007, R1		; 7.
+	;CALL	PRINSP			; PRINT string "X  EXIT"
+	;.WORD	050203			; screen coords
 	CALL	L13024			; KPASE Empty keyboard buffer
 	CALL	L13474			; INICL Show Menu selection
 	MOV	#60000., R1		; menu delay
@@ -5195,11 +5152,12 @@ L13474:	MOV	#177777, R0		; filler
 L13502:	.ASCII	/K  KEYBOARD/
 L13526:	.ASCII	/J  JOYSTICK/
 L13540:	.ASCII	/R  REDEFINE KEYS/
-	;.ASCII	/P  PALETTE/
+	.ASCII	/P  PALETTE/
 	.ASCII	/M  ALTER MISSION/
 	.ASCII	/S  START GAME/
-	.ASCII	/X  EXIT/		;TODO
-	NOP3
+	;.ASCII	/X  EXIT/		;TODO
+	.EVEN
+	NOP1
 	NOP2
 ;
 L13706:	.ASCII	/CONGRATULATIONS/
@@ -5393,12 +5351,9 @@ L15436:	MOV	#K07336, R3		; "PRESS ANY KEY"...
 	JMP	L10606			; => FNISH - Finish the game
 	NOP3
 	NOP2
-; PLFHN procedure: MONEY up 500.
-L15506:	MOV	#000372, R1		; 250.
-	CALL	L10244			; MONUP
-	MOV	#000372, R1		; 250.
-	JMP	L10244			; MONUP
-	NOP1
+	NOP3
+	NOP3
+	NOP3
 ;
 L15530:	.ASCII	/CONGRATULATIONS/
 L15547:	.ASCII	/YOU HAVE COMPLETED/
