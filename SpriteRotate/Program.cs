@@ -10,6 +10,7 @@ class Program
         PrepareGchrs();
         PrepareBchrsOchrs();
         PreparePanelTiles();
+        PreparePanelItems();
         Console.WriteLine("DONE");
     }
 
@@ -111,7 +112,6 @@ class Program
     // Prepare foregraund tiles, 142 tiles 8x10
     static void PrepareBchrsOchrs()
     {
-        
         byte[] bytes = new byte[16384];
         
         var bmpBTiles = new Bitmap(@"..\..\..\bktiles.png");
@@ -182,6 +182,47 @@ class Program
         writer.Flush();
         Console.WriteLine("S2PANC.MAC saved");
     }
+
+    static void PreparePanelItems()
+    {
+        Bitmap bmpItems = new Bitmap(@"..\..\..\items.png");
+
+        FileStream fs = new FileStream("S2ITEM.MAC", FileMode.Create);
+        StreamWriter writer = new StreamWriter(fs);
+        writer.WriteLine("; START OF S2ITEM.MAC");
+        writer.WriteLine();
+
+        for (int item = 0; item < 7; item++)
+        {
+            var address = (UInt16)(0xABC + item * 108);
+            writer.Write($"{EncodeOctalAddress(address)}:");
+            for (int h = 0; h < 24; h++)
+            {
+                writer.Write("\t.WORD\t");
+                for (int w = 0; w < 4; w++)
+                {
+                    int basex = 8 + item * 36 + w * 8;
+                    int basey = 8 + h;
+                    int bb = 0;
+                    for (int x = 0; x < 8; x++)
+                    {
+                        Color color = bmpItems.GetPixel(basex + (7 - x), basey);
+                        int index = ColorToIndex(color);
+                        bb = bb << 2;
+                        bb |= index;
+                    }
+                    writer.Write(EncodeOctalString2((UInt16)bb));
+                    if (w < 3) writer.Write(",");
+                }
+                writer.WriteLine();
+            }
+        }
+        
+        writer.WriteLine();
+        writer.WriteLine("; END OF S2ITEM.MAC");
+        writer.Flush();
+        Console.WriteLine("S2ITEM.MAC saved");
+    }
     
     static UInt16[] DecodeTileFromBitmap(Bitmap bmp, int basex, int basey, int lines = 10)
     {
@@ -224,6 +265,19 @@ class Program
             else
                 file.Write(", ");
         }
+    }
+
+    static string EncodeOctalAddress(UInt16 x)
+    {
+        return string.Format(
+            @"{0}{1}{2}{3}{4}{5}",
+            ((x >> 15) & 7) == 0 ? 'K' : 'L',
+            ((x >> 12) & 7),
+            ((x >> 9) & 7),
+            ((x >> 6) & 7),
+            ((x >> 3) & 7),
+            (x & 7)
+        );
     }
     
     static string EncodeOctalString2(UInt16 x)

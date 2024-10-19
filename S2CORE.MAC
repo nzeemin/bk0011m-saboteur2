@@ -68,8 +68,8 @@ K01100:	MTPS	#000340			; Disable interrupts
 	MOV	#STOP, (R0)+		; Вектор обработки клавиши СТОП
 	MOV	#340, (R0)
 ;TODO: Show "PRESS ANY KEY" sign
-	NOP2
-	NOP2
+	NOP2	;MOV	#K07336, R?		; "PRESS ANY KEY"
+	NOP2	;MOV	#13., R?
 	NOP2	;CALL	PRINSP
 	NOP1	;.WORD	???
 	NOP2	;CALL	L13100			; PAWS0
@@ -77,7 +77,12 @@ K01100:	MTPS	#000340			; Disable interrupts
 STOP:	MOV	#1000, SP
 	MOV	#1330, @#177664		; Устанавливаем стандартное значение скролла
 	MOV	#MMODE1, @#177716	; Включаем основной режим памяти
-K01220:	JMP	START
+;K01206:	MOV	#004000, <K01224+2>	; set filler
+	CALL	K01224			; Clear the screen
+;TODO: Нужно выполнять только один раз, сейчас выполняется по СТОП
+	CALL	PREPAR
+; Initialization finished, go to Menu
+	JMP	K07326			; OUTBF Go to Menu
 ;
 OSTACK:	.WORD	01000			; Сохраняем начальное значение SP
 ;
@@ -85,7 +90,7 @@ OSTACK:	.WORD	01000			; Сохраняем начальное значение S
 ;NOTE: Пока убрал для БК
 ;TODO
 K01314:	RETURN
-	.BLKW	23.
+	.BLKW	19.
 ;
 ; Procedure ?? fill screen attrs?? (the only use on TPORT)
 ;NOTE: Эту процедуру убрал на БК
@@ -115,7 +120,7 @@ K01470:	ADD	#000014, R4		; + 12.
 	CLR	-(R4)
 	BR	K01464
 ;
-; Процедура PRINS - то же что и PRINT, но R2 пишем сразу после инструкции CALL
+; Процедура PRINSP - то же что и PRINT, но R2 пишем сразу после инструкции CALL
 PRINSP:	MOV	(SP), R2		; Адрес возврата со стека
 	MOV	(R2), R2		; слово после инструкции CALL
 	ADD	#2, (SP)		; Подвинули адрес возврата дальше
@@ -454,7 +459,7 @@ K04662:	.BLKB	24			; PIX
 K04672:	.BYTE	2			; COL
 K04673:	.BYTE	0			; BAKCR
 ;
-	.BLKW	11.	;NOTE: Free space
+	.BLKW	14.	;NOTE: Free space
 ;
 ; NERDR procedure: Update NEAR indicator
 K04674:	PUSH	R3
@@ -473,6 +478,7 @@ K04724:	BICB	#177600, (R3)+		; <
 	CLR	R0
 K05032:	MOV	#000032, R3
 	BR	K05050
+;
 ; Invert 4-char NEAR sign
 XRNEAR:
 	MOV	#073467, R3		; screen address
@@ -487,12 +493,12 @@ K04762:	XOR	R0, (R3)+		; <
 	SOB	R1, K04762		; repeat
 	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
 	RETURN
-	NOP3
+;
 ; HLDOD procedure
 K05040:	MOVB	K33464, R0		; get HELD value
 	PUSH	R3
 	CLR	R3
-; TEACH: draw HELD or NEAR item; R0 = item number; R3 = 000 for HELD, 026 for NEAR
+; TEACH: draw HELD or NEAR item; R0 = item number; R3 = 000 for HELD, 032 for NEAR
 K05050:	ASL	R3
 	BIC	#177600, R0		; 0..177
 	PUSH	R1
@@ -501,20 +507,12 @@ K05050:	ASL	R3
 	MOV	K05254(R0), R2		; get item address
 	ADD	#067602, R3		; HELD item screen address + offset
 	PUSH	R3
-	MOV	#000030, R1
+	MOV	#000030, R1		; 24. lines
 	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
-K05126:	MOVB	(R2)+, R5		; <
-	ASL	R5			; |
-	MOV	PXCONH(R5), (R3)+	; | copy pixels
-	MOVB	(R2)+, R5		; |
-	ASL	R5			; |
-	MOV	PXCONH(R5), (R3)+	; | copy pixels
-	MOVB	(R2)+, R5		; |
-	ASL	R5			; |
-	MOV	PXCONH(R5), (R3)+	; |  copy pixels
-	MOVB	(R2)+, R5		; |
-	ASL	R5			; |
-	MOV	PXCONH(R5), (R3)+	; |  copy pixels
+K05126:	MOV	(R2)+, (R3)+		; <
+	MOV	(R2)+, (R3)+		; |  copy pixels
+	MOV	(R2)+, (R3)+		; |  copy pixels
+	MOV	(R2)+, (R3)+		; |  copy pixels
 	ADD	#000070, R3		; |  next line
 	SOB	R1, K05126		; repeat
 	POP	R3
@@ -529,35 +527,8 @@ K05164:
 ;
 ; Table of addrs: Nothing, Shuriken, Knife, Empty Box, Question, Pipe, Question, Wrench
 K05254:	.WORD	K05274, K05450, K05624, K06000, K06154, K06504, K06154, K06330
-; Item pictograms 32x24, 108. bytes each * 7 = 756. bytes total
+; Item pictograms 32x24 in color, 192. bytes each * 7 = 1344. bytes total
 .INCLUDE /S2ITEM.MAC/
-;TODO: Подготовить тут место под расширение S2ITEM в цветные картинки, нужно 294. слов
-	.BLKW	253.	;NOTE: Free space
-
-START:
-;K01206:	MOV	#004000, <K01224+2>	; set filler
-	CALL	K01224			; Clear the screen
-	CALL	PREPAR
-;
-;TODO: Нужно выполнять только один раз, сейчас выполняется по СТОП
-; Preparing reflection table, but starting from 128.
-K06660:	MOV	#000200, R4		; ^B10000000 = 200 = 128.
-	CLR	R0
-	MOV	#000400, R1		; 256.
-	MOV	#L22624, R3		; REFBF table address
-K06676:	MOVB	#000010, R2		; <  8.
-	CLR	R5
-	BISB	R4, R5
-K06706:	RORB	R5			; | <
-	ROLB	R0			; | |
-	SOB	R2, K06706		; | repeat
-	MOVB	R0, (R3)+
-	INCB	R4
-	SOB	R1, K06676		; repeat
-;
-K06722:	JMP	K07326			; OUTBF Go to Menu
-;
-;NOTE: Таблица масок K06726 удалена, стала не нужна
 ;
 K07336:	.ASCII	/PRESS ANY KEY TO CONTINUE/
 ; Missions info
@@ -815,7 +786,7 @@ K12423:	.ASCII	/PAY $0000000 /		; MONEY
 K12440:	.ASCIZ	/XXXXXXXXXXX/		; NAME
 	.EVEN
 
-	.BLKW	17.	;NOTE: Free space
+	.BLKW	11.	;NOTE: Free space
 ;
 ; OUTBF: Prepare for Menu and start the Menu
 K07326:	CALL	L07634			; INITHI Draw Ninja for Menu
@@ -4581,6 +4552,7 @@ K55736:	MOVB	K47313, K01602
 	MOVB	K01602, K47313
 	RETURN
 ;
+.IIF	NE <.-055764>, ERRORR
 ; K55764 = RM0		Room sequences, 246. rooms
 ; K70632 = MAP		World map, 32x28 bytes
 ; K72572 = RMS		Room sequence addresses, 246. rooms
@@ -4590,7 +4562,11 @@ K60677 = K60640 + 37			; LFT3 lift position byte: 377 = DOWN, 0 = UP
 	.BLKW	784.	;NOTE: Free space
 ;
 .INCLUDE /S2SPRT.MAC/
-
+;
+	.BLKW	1147.	;NOTE: Free space
+;
+.INCLUDE /S2NMNU.MAC/
+;
 ; Font regular, 8x8, 8. bytes each, 96. symbols = 768. bytes
 ;L06234:
 .INCLUDE /S2FONT.MAC/
@@ -4748,37 +4724,9 @@ K01254:	MOV	R0, (R5)+		; <  #0
 	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
 	RETURN
 ;
-;TODO: Поместить в буферную память, используется один раз на старте
-PREPAR:
-; Prepare PXCONV table, used to convert pixels BYTE -> BK WORD
-	MOV	#L33124, R2
-	MOV	#-128., R3		; R3 бежит от -128. до +127.
-1$:	CLR	R5			; в R5 будет готовое слово
-	MOV	#8., R4			; в R4 счётчик по разрядам
-	MOV	R3, R1
-2$:	ASR	R1			; 0-й бит идёт в C
-	ROL	R5			; забираем из C
-	ROL	R5
-	SOB	R4, 2$			; repeat
-	MOV	R5, (R2)+		; записываем результат
-	INC	R3
-	CMP	R3, #128.
-	BLT	1$
-; Prepare TMUL20 table
-	MOV	#TMUL20, R2
-	MOV	#256., R1
-	CLR	R3
-10$:	MOV	R3, (R2)+
-	ADD	#20., R3
-	SOB	R1, 10$
-; End of PREPAR
-	RETURN
-
-	.BLKW	6.	;NOTE: Free space
+	.BLKW	39.	;NOTE: Free space
 
 L10560:	.ASCIZ	/                     /	; SPCHR 21. space char
-	NOP3
-	NOP3
 ;
 ; FNISH: Finish the game
 L10606:	CALL	L07634			; INITHI Draw Ninja for Menu
@@ -5500,7 +5448,47 @@ L15775:
 ; Table for multiplication by 20.
 TMUL20:	.BLKW	256.
 ;
-	.BLKW	728.	;NOTE: Free space
+;TODO: Поместить в буферную память, используется один раз на старте
+PREPAR:
+; Preparing reflection table, but starting from 128.
+K06660:	MOV	#000200, R4		; ^B10000000 = 200 = 128.
+	CLR	R0
+	MOV	#000400, R1		; 256.
+	MOV	#L22624, R3		; REFBF table address
+K06676:	MOVB	#000010, R2		; <  8.
+	CLR	R5
+	BISB	R4, R5
+K06706:	RORB	R5			; | <
+	ROLB	R0			; | |
+	SOB	R2, K06706		; | repeat
+	MOVB	R0, (R3)+
+	INCB	R4
+	SOB	R1, K06676		; repeat
+; Prepare PXCONV table, used to convert pixels BYTE -> BK WORD
+	MOV	#L33124, R2
+	MOV	#-128., R3		; R3 бежит от -128. до +127.
+1$:	CLR	R5			; в R5 будет готовое слово
+	MOV	#8., R4			; в R4 счётчик по разрядам
+	MOV	R3, R1
+2$:	ASR	R1			; 0-й бит идёт в C
+	ROL	R5			; забираем из C
+	ROL	R5
+	SOB	R4, 2$			; repeat
+	MOV	R5, (R2)+		; записываем результат
+	INC	R3
+	CMP	R3, #128.
+	BLT	1$
+; Prepare TMUL20 table
+	MOV	#TMUL20, R2
+	MOV	#256., R1
+	CLR	R3
+10$:	MOV	R3, (R2)+
+	ADD	#20., R3
+	SOB	R1, 10$
+; End of PREPAR
+	RETURN
+;
+	.BLKW	684.	;NOTE: Free space
 ;
 .IIF	NE <.-122624>, ERRORB
 ; Reflection table, but starting from 128., 256. bytes; see K06660
