@@ -67,11 +67,12 @@ K01100:	MTPS	#000340			; Disable interrupts
 	MOV	#000004, R0
 	MOV	#STOP, (R0)+		; Вектор обработки клавиши СТОП
 	MOV	#340, (R0)
-;TODO: Show "PRESS ANY KEY" sign
-	NOP2	;MOV	#K07336, R?		; "PRESS ANY KEY"
-	NOP2	;MOV	#13., R?
-	NOP2	;CALL	PRINSP
-	NOP1	;.WORD	???
+	CALL	PREPAR			; Prepare convertion tables
+; Show "PRESS ANY KEY" sign
+	MOV	#K07336, R3		; "PRESS ANY KEY"
+	MOV	#13., R1
+	CALL	PRINSP
+	.WORD	050351
 	NOP2	;CALL	L13100			; PAWS0
 ; Сюда переходим по нажатию клавиши СТОП
 STOP:	MOV	#1000, SP
@@ -79,8 +80,6 @@ STOP:	MOV	#1000, SP
 	MOV	#MMODE1, @#177716	; Включаем основной режим памяти
 ;K01206:	MOV	#004000, <K01224+2>	; set filler
 	CALL	K01224			; Clear the screen
-;TODO: Нужно выполнять только один раз, сейчас выполняется по СТОП
-	CALL	PREPAR
 ; Initialization finished, go to Menu
 	JMP	K07326			; OUTBF Go to Menu
 ;
@@ -139,7 +138,7 @@ K01716:	CLR	R0
 	PUSH	R2
 	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
 	PUSH	R1
-	CLR	(R2)			; Очищаем верхнюю строку
+	MOV	#052525, (R2)		; Очищаем верхнюю строку
 	ADD	#000100, R2		; next line
 	MOVB	#000010, R5		; 8. lines
 K01760:	MOVB	(R0)+, R1		; <
@@ -147,7 +146,7 @@ K01760:	MOVB	(R0)+, R1		; <
 	MOV	PXCONH(R1), (R2)	; |  copy to screen
 	ADD	#000100, R2		; |  next line
 	SOB	R5, K01760		; repeat
-	CLR	(R2)			; Очищаем нижнюю строку
+	MOV	#052525, (R2)		; Очищаем нижнюю строку
 	POP	R1
 	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
 	POP	R2
@@ -194,7 +193,7 @@ K02106:	BISB	R2, <K02070+2>		; (K02070+2) = [Y5 Y4 Y3 Y2 Y1 Y0  0  0]
 	ASR	R4
 	RETURN
 
-	.BLKW	46.	;NOTE: Free space
+	.BLKW	44.	;NOTE: Free space
 ;
 ; DOPIC procedure: Show the room on the screen
 K02202:	MOV	#K41173, R3		; FFCOL
@@ -580,7 +579,7 @@ K10562:	.ASCII	/SMASH THROUGH FENCE ON MOTORBIKE/
 K10622:	.WORD	0			; LVPTR
 
 ; Start Game selected in Menu - show level briefing
-K10624:	CLR	<K01224+2>		; set filler
+K10624:	MOV	#052525, <K01224+2>	; set filler: blue background
 		;MOVB	#000062, <K01224+3>
 	CALL	K01224			; Clear the screen
 	MOV	#K10230, R3		; "MISSION   BRIEFING" etc.
@@ -671,7 +670,7 @@ K11216:
 	CALL	L13024			; Empty keyboard buffer
 	CALL	L13100			; PAWS0 Get a key
 ; After the briefing - clear the screen, show the indicator panel
-	CLR	<K01224+2>		; set filler
+	MOV	#052525, <K01224+2>	; set filler
 		;MOVB	#000011, <K01224+3>
 	CALL	K01224			; Clear the screen
 	MOVB	K41304, R0		; get input method
@@ -756,14 +755,14 @@ K11772:	.BYTE	010,021,004,016,021,016,016,021,005,016,021,004,011,014,022,004
 	.BYTE	021,005,017,021,004,013,377
 	.EVEN
 ; PANCR - Indicator panel tiles
-K12121:	.WORD	000000, 177400, 052700, 176560, 001534, 000334, 000334, 000334
-	.WORD	000000, 177777, 052525, 177777, 000000, 000000, 000000, 000000
-	.WORD	000000, 000377, 001525, 006577, 032700, 033400, 033400, 033400
-	.WORD	000334, 000334, 000334, 000334, 000334, 000334, 000334, 000334
-	.WORD	033400, 033400, 033400, 033400, 033400, 033400, 033400, 033400
-	.WORD	000334, 000334, 000334, 001534, 176560, 052700, 177400, 000000
-	.WORD	000000, 000000, 000000, 000000, 177777, 052525, 177777, 000000
-	.WORD	033400, 033400, 033400, 032700, 006577, 001525, 000377, 000000
+K12121:	.WORD	052525, 125125, 052625, 124545, 053131, 052631, 052631, 052631
+	.WORD	052525, 125252, 052525, 125252, 052525, 052525, 052525, 052525
+	.WORD	052525, 052652, 053125, 054552, 062625, 063125, 063125, 063125
+	.WORD	052631, 052631, 052631, 052631, 052631, 052631, 052631, 052631
+	.WORD	063125, 063125, 063125, 063125, 063125, 063125, 063125, 063125
+	.WORD	052631, 052631, 052631, 053131, 124545, 052625, 125125, 052525
+	.WORD	052525, 052525, 052525, 052525, 125252, 052525, 125252, 052525
+	.WORD	063125, 063125, 063125, 062625, 054552, 053125, 052652, 052525
 	.WORD	000000, 030300, 147400, 171717, 030360, 141460, 006060, 000060
 	.WORD	000000, 000360, 000014, 036014, 001417, 000363, 037703, 001460
 	.WORD	000300, 141700, 140377, 170360, 177460, 030014, 030014, 006000
@@ -774,8 +773,8 @@ K12121:	.WORD	000000, 177400, 052700, 176560, 001534, 000334, 000334, 000334
 	.WORD	000300, 146314, 147714, 171460, 030077, 030060, 006014, 000000
 	.WORD	000300, 037700, 001760, 177403, 030300, 006000, 001774, 007400
 	.WORD	000000, 140060, 030060, 031777, 176300, 030300, 030060, 000000
-	.WORD	000000, 000000, 000000, 000000, 000000, 000000, 000000, 000000
-	.WORD	125252, 125252, 125252, 125252, 125252, 125252, 125252, 125252
+	.WORD	052525, 052525, 052525, 052525, 052525, 052525, 052525, 052525
+	.WORD	177777, 177777, 177777, 177777, 177777, 177777, 177777, 177777
 ;
 ; PANMS - Indicator signs
 K12405:	.ASCII	/HELD/
@@ -786,7 +785,7 @@ K12423:	.ASCII	/PAY $0000000 /		; MONEY
 K12440:	.ASCIZ	/XXXXXXXXXXX/		; NAME
 	.EVEN
 
-	.BLKW	11.	;NOTE: Free space
+	.BLKW	9.	;NOTE: Free space
 ;
 ; OUTBF: Prepare for Menu and start the Menu
 K07326:	CALL	L07634			; INITHI Draw Ninja for Menu
@@ -4571,6 +4570,8 @@ K60677 = K60640 + 37			; LFT3 lift position byte: 377 = DOWN, 0 = UP
 ;L06234:
 .INCLUDE /S2FONT.MAC/
 
+L10560:	.ASCIZ	/                     /	; SPCHR 21. space char
+
 ; INITHI procedure: Draw Ninja for Menu
 ; RLE sequence decoding onto the screen
 L07634:	MOV	#L04120, R3		; HSPCD
@@ -4602,7 +4603,7 @@ L07634:	MOV	#L04120, R3		; HSPCD
 ;
 	JMP	L10320			; CLSLF Clear Menu left part, and return
 ;
-	.BLKW	72.	;NOTE: Free space
+	.BLKW	73.	;NOTE: Free space
 ;
 ; GTBAK procedure
 L10200:	MOV	#K50110, R3		; MANBF
@@ -4619,6 +4620,12 @@ L10224:	MOV	R0, K47776		; set command
 L10236:	MOV	#000240, R0		; NOP command
 	BR	L10224
 ;
+; PLFHN procedure: MONEY up 500.
+L15506:	MOV	#000372, R1		; 250.
+	CALL	L10244			; MONUP
+	MOV	#000372, R1		; 250.
+;	BR	L10244			; MONUP
+;
 ; MONUP procedure: MONEY up by R1
 L10244:	MOV	#<K12423+12>, R3	; < address
 	MOV	#000006, R5		; 6.
@@ -4630,6 +4637,7 @@ L10260:	INCB	(R3)			; <
 	DEC	R3
 	SOB	R5, L10260		; repeat
 L10276:	SOB	R1, L10244		; repeat
+;
 ; MONYP entry point: Print MONEY
 L10300:	MOV	#050146, R2
 	MOV	#000016, R1		; 14.
@@ -4638,26 +4646,25 @@ L10300:	MOV	#050146, R2
 ;
 ; CLSLF procedure: Clear Menu left part
 L10320:	PUSH	R4
-	MOV	#000030, R4		; 24. lines
+	MOV	#240., R4		; 240. lines
 	MOV	#040000, R2		; screen address
+	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
 L10332:	PUSH	R2			; <
 	MOV	#000025, R1		; |  21.
-	MOV	#L10560, R3		; |  SPCHR 21. space char string
-	CALL	K01704			; |  Print string
+10$:	MOV	#052525, (R2)+		; |  blue background
+	SOB	R1, 10$
 	POP	R2			; |
-	ADD	#000040, R2		; | +32.
-	BIT	#000340, R2		; |
-	BNE	L10374			; |
-	SUB	#000400, R2		; |
-	ADD	#004000, R2		; |
+	ADD	#000100, R2		; | next line
 L10374:	SOB	R4, L10332		; repeat; Clear atributes
-;NOTE удалил, не нужно на БК
-L10554:	POP	R4
+	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
+	POP	R4
 	RETURN
 ;
+	.BLKW	2.	;NOTE: Free space
+;
 ; Clear 1024.*8.*2. = 16K bytes on the screen
-K01224:	MOV	#000000, R0		; Filler value  !!MUT-ARG!!
-	MOV	#002000, R1		; 1024.
+K01224:	MOV	#052525, R0		; Filler value  !!MUT-ARG!!
+	MOV	#960., R1		; 240. lines
 	MOV	#040000, R5		; Screen start address
 	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
 K01254:	MOV	R0, (R5)+		; <  #0
@@ -4669,18 +4676,14 @@ K01254:	MOV	R0, (R5)+		; <  #0
 	MOV	R0, (R5)+		; |  #6
 	MOV	R0, (R5)+		; |  #7
 	SOB	R1, K01254		; repeat
+	MOV	#256., R1		; 16. lines
+20$:	CLR	(R5)+
+	CLR	(R5)+
+	SOB	R1, 20$
 	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
 	RETURN
 ;
-; PLFHN procedure: MONEY up 500.
-L15506:	MOV	#000372, R1		; 250.
-	CALL	L10244			; MONUP
-	MOV	#000372, R1		; 250.
-	BR	L10244			; MONUP
-;
-	.BLKW	32.	;NOTE: Free space
-
-L10560:	.ASCIZ	/                     /	; SPCHR 21. space char
+	.BLKW	27.	;NOTE: Free space
 ;
 ; FNISH: Finish the game
 L10606:	CALL	L07634			; INITHI Draw Ninja for Menu
@@ -5211,24 +5214,20 @@ L14506:	MOV	#000000, R2		;!!MUT-ARG!!
 	PUSH	R4
 	CALL	K02056			; screen coords R2 to screen address
 	POP	R4
-	MOV	#001200, R3
-	ADD	R2, R3
 ; NRGPX:
 L14534:	MOVB	#000, R5		;!!MUT-ARG!!
 	ASL	R5			;
 	MOV	PXCONH(R5), R5		;
-	MOV	#000012, R1		; 8. NOTE: Увеличено для БК
+	BIC	#052525, R5		; remove blue background
+	MOV	#20., R1	; BK	; 20. lines
 	MOV	#MMODE5, @#177716	; Включаем режим памяти 5
-L14560:	MOV	(R3), R0		; <
-	XOR	R5, R0
-	MOV	R0, (R3)
-	MOV	(R2), R0
+L14560:	MOV	(R2), R0		; <
 	XOR	R5, R0
 	MOV	R0, (R2)
 	ADD	#000100, R2		; next line
-	ADD	#000100, R3
 	SOB	R1, L14560		; repeat
 	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
+;
 	MOV	#<L14534+2>, R3
 	ASLB	(R3)
 	BHIS	L14664			; => NRGC1
@@ -5242,6 +5241,8 @@ L14560:	MOV	(R3), R0		; <
 	MOVB	#001, K33540		; set DEAD = 1
 	CLRB	<L14472+2>		; clear (DECEN+1)
 	RETURN
+	NOP3
+	NOP3
 	NOP3
 ; NRGC1:
 L14664:	POP	R5
@@ -5426,9 +5427,14 @@ K06706:	RORB	R5			; | <
 	MOV	#8., R4			; в R4 счётчик по разрядам
 	MOV	R3, R1
 2$:	ASR	R1			; 0-й бит идёт в C
-	ROL	R5			; забираем из C
+	BCC	5$
+	ROL	R5			; забираем 1 из C
 	ROL	R5
-	SOB	R4, 2$			; repeat
+	BR	8$
+5$:	ROL	R5			; забираем 0 из C
+	SEC
+	ROL	R5
+8$:	SOB	R4, 2$			; repeat
 	MOV	R5, (R2)+		; записываем результат
 	INC	R3
 	CMP	R3, #128.
@@ -5443,7 +5449,7 @@ K06706:	RORB	R5			; | <
 ; End of PREPAR
 	RETURN
 ;
-	.BLKW	684.	;NOTE: Free space
+	.BLKW	679.	;NOTE: Free space
 ;
 .IIF	NE <.-122624>, ERRORB
 ; Reflection table, but starting from 128., 256. bytes; see K06660
