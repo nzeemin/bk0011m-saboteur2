@@ -193,7 +193,7 @@ K02106:	BISB	R2, <K02070+2>		; (K02070+2) = [Y5 Y4 Y3 Y2 Y1 Y0  0  0]
 	ASR	R4
 	RETURN
 
-	.BLKW	44.	;NOTE: Free space
+	.BLKW	32.	;NOTE: Free space
 ;
 ; DOPIC procedure: Show the room on the screen
 K02202:	MOV	#K41173, R3		; FFCOL
@@ -317,8 +317,7 @@ K03364:	MOVB	K03542, K41175		; save (NJCOL+1) to TMPNC
 	BISB	L27624(R2), R0		; get tile from BUFFN: Ninja tile screen
 	MOV	R0, R3
 	INCB	R0
-	BNE	K03412
-	JMP	K04104			; 0 => OBJDA
+	BEQ	K04104			; 0 => OBJDA
 K03412:	CMPB	R0, #000341		; 225.
 	BHIS	K03462			; => WILSN
 	CMPB	R0, #000323		; 221.
@@ -434,7 +433,9 @@ K04544:	MOV	#K04662, R2		; PIX addr
 	.REPT	8.
 	MOVB	(R3)+, R0
 	ASL	R0
-	MOV	PXCONH(R0), (R2)+
+	MOV	PXCONH(R0), R0
+	BIC	#052525, R0		; remove blue background
+	MOV	R0, (R2)+
 	.ENDR
 	CLR	(R2)+
 	BR	K04274			; => DRAW
@@ -458,7 +459,7 @@ K04662:	.BLKB	24			; PIX
 K04672:	.BYTE	2			; COL
 K04673:	.BYTE	0			; BAKCR
 ;
-	.BLKW	14.	;NOTE: Free space
+	.BLKW	4.	;NOTE: Free space
 ;
 ; NERDR procedure: Update NEAR indicator
 K04674:	PUSH	R3
@@ -1458,7 +1459,7 @@ K16742:	MOV	#K17362, R4		; copy from FDESC
 	MOVB	#006, K01604		; width = 6
 	MOV	#000004, R1		; height = 4
 	MOV	#064044, R3
-K16764:	JMP	K16432			; Copy tiles
+	BR	K16432			; Copy tiles
 ; Room marker $46 106 - BIKRD - Motorbike 11x5 tiles
 K16770:	MOVB	K17200, R0		; get BIKER
 	INCB	R0			; == 255. ?
@@ -1467,13 +1468,14 @@ K16770:	MOVB	K17200, R0		; get BIKER
 	MOVB	#000013, K01604		; width = 11.
 	MOV	#000005, R1		; height = 5
 	MOV	#063730, R3
-	BR	K16764
+	BR	K16432
 ; Room marker $48 110 - AUTOR - Auto run on final screen
 K17024:	MOVB	K17200, R0		; get BIKER
 	CMPB	R0, #376		; 254.
 	BNE	K17044
 	MOVB	#020, K17200		; set BIKER = 16.
-K17044:	JMP	K16466			; => NWUKL
+K17044:	BR	K16466			; => NWUKL
+	NOP2
 ; ??? 4x4 tiles
 K17050:	.BYTE	211,212,212,213		; CONS2
 	.BYTE	377,377,041,377
@@ -2022,7 +2024,8 @@ K25700:	MOVB	K36215, R0		; get RMAC
 	JMP	K30606
 K25732:	CMPB	000013(R4), #000002
 	BLO	K25746
-	JMP	K26310
+	BR	K26310
+	NOP1
 K25746:	MOVB	000001(R4), R1
 	MOVB	000004(R4), K01611
 	MOVB	000003(R4), K01610
@@ -2080,7 +2083,7 @@ K26210:	CMPB	000002(R4), 000007(R4)
 	CMPB	000010(R4), R1
 	BNE	K26236
 	INCB	K01607
-	JMP	K26104
+	BR	K26104
 ; KONT2:
 K26236:	INCB	R1
 	INC	R3
@@ -2163,6 +2166,7 @@ K26602:	SWAB	K26670
 	MOV	K26676, K26674
 	MOV	R3, K26676
 	RETURN
+	NOP1
 ;
 ; NMERT table jump addresses
 K26626:
@@ -2586,11 +2590,12 @@ K31324:	MOVB	L15646, R0		; get RMTIME
 	BEQ	K31344
 	DECB	R0
 	MOVB	R0, L15646		; set RMTIME
-	JMP	K31712			; => MISGO
+	BR	K31712			; => MISGO
+	NOP3
+	NOP2
 ; NJSTN:
 K31344:	CMPB	K36214, #037		; RMDN == 31. $1F ?
-	BNE	K31360
-	JMP	K31712			; => MISGO
+	BEQ	K31712			; => MISGO
 ; Room level != 31.
 K31360:	MOV	<K13332+2>, R3		; get (RM+1)
 	MOVB	(R3), R0		; get room type
@@ -2603,8 +2608,7 @@ K31360:	MOV	<K13332+2>, R3		; get (RM+1)
 	CMPB	R0, #046		; 38. $26
 	BEQ	K31430
 	CMPB	R0, #052		; 42. $2A
-	BEQ	K31430
-	JMP	K31712			; => MISGO
+	BNE	K31712			; => MISGO
 ; BATSI: Bats in the room
 K31430:	CALL	K27766			; RND
 	BIC	#177700, R0		; 0..63.
@@ -2700,7 +2704,7 @@ K32050:	MOVB	000003(R4), K01610
 ; NOEL3:
 K32102:	CLRB	(R4)
 	POP	R1
-	JMP	K32436
+	BR	K32436
 K32112:	ADD	#003300, R3		; + <BUFG1-BUFFB>
 	CMPB	K32300, #000006		; MSLNO == 6. ?
 	BNE	K32146
@@ -2740,6 +2744,7 @@ K32176:	MOV	#000007, R0		; 7.
 	MOVB	R0, 055432
 	CLR	R0
 	RETURN
+	NOP1
 ;
 K32300:	.WORD	0			; MSLNO - Number of objects in the air
 ;
@@ -2757,7 +2762,8 @@ K32302:	SUB	#002200, R3
 K32350:	MOVB	000006(R4), R5
 	DECB	R1
 	BEQ	K32364
-	JMP	K32000
+	BR	K32000
+	NOP1
 K32364:	POP	R1
 	MOVB	000003(R4), K01610
 	MOVB	000004(R4), K01611
@@ -3052,16 +3058,16 @@ K36344:	MOVB	K36210, R0		; get MANA
 	BEQ	K36374			; left =>
 ; DIR != 0: right
 	CMPB	R0, #035		; MANA == 29. ?
-	BEQ	K36366	;TODO
-	RETURN
-K36366:	POP	R3
+	BNE	K36410			; => return
+	POP	R3
 	JMP	K37746			; => RITSC - go one room right
 ; DIR = 0: left
 K36374:	CMPB	R0, #375		; == 253. ?
-	BEQ	K36404	;TODO
-	RETURN
-K36404:	POP	R3
+	BNE	K36410			; => return
+	POP	R3
 	JMP	K40012			; => LEFSC - go one room left
+K36410:	RETURN
+	NOP1
 ;
 ; JMP1P: Jump-flip action - Vector for (VECTN+1)
 K36412:	CALL	K40726			; OFTOP - check if moving room up
@@ -3172,7 +3178,7 @@ K37102:	MOV	#<K54510+2>, R3		; HIGHT+1 addr
 K37120:	SEC
 	ROLB	K37056			; TTFAL
 	BNE	K37134
-	JMP	K37164			; => NACRF
+	BR	K37164			; => NACRF
 K37134:	CALL	K37270			; HITJJ
 	MOVB	050162, R0
 	INCB	R0
@@ -3226,20 +3232,17 @@ K37304:	POP	R1
 K37352:	MOVB	050154, R0
 	INCB	R0
 	CMPB	R0, #310		; 200.
-	BHIS	K37372	;TODO
-	JMP	K37412			; => NRNUP
-K37372:	DECB	K36211
+	BLO	K37412			; => NRNUP
+	DECB	K36211
 	SUB	#000040, K36212		; MANPS
 	CALL	K40726			; OFTOP
 	BR	K37520			; => NRNDN
 ; NRNUP:
 K37412:	CMPB	050165, #307		; 199.
-	BLO	K37426	;TODO
-	JMP	K37520			; => NRNDN
+	BHIS	K37520			; => NRNDN
 K37426:	CMPB	050162, #307		; 199.
-	BLO	K37442	;TODO
-	JMP	K37520			; => NRNDN
-K37442:	INCB	K36211
+	BHIS	K37520			; => NRNDN
+	INCB	K36211
 	ADD	#000040, K36212		; MANPS += 32.
 	CALL	K54212			; OFBOT
 	PUSH	R1
@@ -3283,6 +3286,8 @@ K37636:	BIT	#000020, R0		; bit 4 fire ?
 	BNE	K37656
 	JMP	K55262			; => SETST
 K37656:	JMP	K25276			; => ENDVC
+;
+	.BLKW	7.	;NOTE: Free space
 ;
 K37662:	.WORD	0			; SPEED (action counter)
 ;
@@ -3928,22 +3933,23 @@ K52030:	JMP	K55262			; => SETST
 ;
 K52034:	.WORD	1			; ENTIM timer
 ;
+	NOP2
+	NOP2
+;
 ; RESTP procedure
 K52036:	MOV	#K52034, R3		; ENTIM addr
 	DECB	(R3)			; decr ENTIM
 	BNE	K52116			; NZ => RETURN
-	NOP1
 	MOVB	#002, (R3)		; set ENTIM = 2
 	CMPB	<L14506+2>, #016	; (NRGCR+1) == 14. ?
 	BNE	K52076			; NZ => NGOKU
 	CMPB	<L14534+2>, #001	; (NRGPX+1) == 1 ?
 	BEQ	K52116			; Z => RETURN
-	NOP1
 ; NGOKU:
 K52076:	CALL	L14442			; NRGUP
 	MOV	#000001, R1
 	CALL	L14502			; DECN2
-	CALL	L14442			; NRGUP
+	JMP	L14442			; NRGUP and return
 K52116:	RETURN
 ; STANP: Ninja standing - Vector for (VECTN+1)
 K52120:	CALL	K52036			; RESTP
@@ -3982,7 +3988,6 @@ K52266:	MOV	<K13332+2>, R3		; get (RM+1)
 	BEQ	K52446			; yes => K2DAQ
 	CMPB	(R3), #115		; room type == $4D ?
 	BEQ	K52402			; yes => KODAQ
-	NOP2
 ; NSEEC:
 K52312:	MOVB	060610, K01602		; get LFT1
 	MOV	#000356, R0
@@ -4176,16 +4181,15 @@ K53512:	MOVB	<K50110+46>, R0		; get (MANBF+38.)
 	BEQ	K53530
 	MOVB	<K50110+47>, R0		; get (MANBF+39.)
 K53530:	CMPB	R0, #000011		; == 9. ?
-	BNE	K53542
-K53536:	JMP	K53264			; => SETLD
-K53542:	CMPB	R0, #005		; == 5. ?
-	BEQ	K53536			; => SETLD
+	BEQ	K53264			; => SETLD
+	CMPB	R0, #005		; == 5. ?
+	BEQ	K53264			; => SETLD
 	CMPB	R0, #045		; == 37. ?
-	BEQ	K53536			; => SETLD
+	BEQ	K53264			; => SETLD
 	CMPB	R0, #054		; == 44. ?
-	BEQ	K53536			; => SETLD
+	BEQ	K53264			; => SETLD
 	CMPB	R0, #020		; == 16. ?
-	BEQ	K53536			; => SETLD
+	BEQ	K53264			; => SETLD
 	MOV	#K51722, R3		; KICKP -> (VECTN+1)
 	MOV	#K47336, R2		; JUMPC -> (CHARN+1)
 	JMP	K55246			; => SETVC - set vectors
@@ -4200,7 +4204,7 @@ K53632:	MOVB	(R3)+, (R2)+		; <
 	SOB	R1, K53632		; repeat
 	CLRB	K41172			; set LEGP = 0
 	RETURN
-	NOP1
+	NOP3
 ; LADDP:
 K53646:	MOVB	<K50110+46>, R0		; get (MANBF+38.)
 	TSTB	K36264			; check DIR
@@ -4330,6 +4334,8 @@ K54404:	MOV	#K46162, R2		; NINDC address
 K54440:	.ASCII	/@MISSION@TERMINATED@/	; DEDM1
 K54464:	.ASCII	/@@MISSION@@FAILURE@@/	; DEDM4
 ;
+	NOP2
+;
 ; HIGHT:
 K54510:	MOV	#000001, R1		; 1.
 	CALL	L14472			; DECEN
@@ -4372,9 +4378,8 @@ K54702:	MOVB	#001, -(R3)		; <
 K54710:	CALL	K41176			; KEY
 	MOV	#K54774, R3		; LIFTU address
 	BIT	#000010, R0		; bit 3 up ?
-	BEQ	K54732
-	JMP	K55252			; => SETV2 - set vector
-K54732:	MOVB	#177777, R0
+	BNE	K55252			; => SETV2 - set vector
+	MOVB	#177777, R0
 	MOVB	R0, 060610		; set LFT1 = 255.
 	MOVB	R0, K60677		; set LFT3 = 255. DOWN
 	MOV	K36212, R3		; get MANPS
@@ -4601,9 +4606,9 @@ L07634:	MOV	#L04120, R3		; HSPCD
 	BR	10$			; continue
 50$:	MOV	#MMODE1, @#177716	; Включаем режим памяти 1
 ;
-	JMP	L10320			; CLSLF Clear Menu left part, and return
+	BR	L10320			; CLSLF Clear Menu left part, and return
 ;
-	.BLKW	73.	;NOTE: Free space
+	.BLKW	74.	;NOTE: Free space
 ;
 ; GTBAK procedure
 L10200:	MOV	#K50110, R3		; MANBF
@@ -4811,7 +4816,7 @@ L11360:	PUSH	R1			; <
 	BR	10$			; repeat
 L11464:	POP	R1
 	SOB	R1, L11360		; decrease timer, => DLNX2
-	JMP	L11050			; Time is out => NOYBA
+	BR	L11050			; Time is out => NOYBA
 L11474:	JMP	@(R5)
 ;
 MENUTB:	.WORD	113, L13146		; 'K' - KEYBOARD
@@ -4822,7 +4827,7 @@ MENUTB:	.WORD	113, L13146		; 'K' - KEYBOARD
 	.WORD	123, L11456		; 'S' - START GAME
 ;	.WORD	130, FNCORE		; 'X' - EXIT
 	.WORD	0
-	NOP2
+	NOP3
 ;
 ; Start Game selected in Menu
 L11456:	POP	R1
@@ -4995,9 +5000,6 @@ L12736:	MOVB	R0, (R3)
 	MOV	#000001, R1
 	PUSH	R2
 	CALL	K01704			; PRINT string; char will erase the cursor
-	NOP2	;MOV	K01606, R2		; screen coords
-	NOP2	;MOV	#125252, R0
-	NOP2	;CALL	L13224			; calc screen attr address and set attrs for 8x8 block
 	INC	K01606			; increase cursor position
 	POP	R2
 	INC	R2
@@ -5025,8 +5027,8 @@ L13616:	CMPB	(SP), #001		; position == 1 ?
 	POP	R2
 	DEC	R3
 	BR	L13000			; => ENDDL
-	NOP2
-	NOP2
+;
+	.BLKW	10.	;NOTE: Free space
 ;
 ; Keyboard selected in Menu
 L13146:	CALL	L13424			; NOCOL Clear Menu selection
@@ -5158,10 +5160,7 @@ L13540:	.ASCII	/R  REDEFINE KEYS/
 	.ASCII	/P  PALETTE/
 	.ASCII	/M  ALTER MISSION/
 	.ASCII	/S  START GAME/
-	;.ASCII	/X  EXIT/		;TODO
-	.EVEN
-	NOP1
-	NOP2
+	.ASCII	/X  EXIT/
 ;
 L13706:	.ASCII	/CONGRATULATIONS/
 	.ASCII	/YOU ARE NOW A TRUE/
@@ -5189,14 +5188,13 @@ L14416:	.ASCII	/SPARE SCORE+NAME /
 
 L14437:	.ASCII	/0 /			; ZERO
 	.EVEN
-	NOP1
+	NOP2
 ;
 ; NRGUP procedure ??
 L14442:	MOV	#<L14534+2>, R3		; NRGPX+1
 	CLC
 	RORB	(R3)
-	BLO	L14456	;TODO
-	RETURN
+	BHIS	L14470			; NC => return
 L14456:	BISB	#000200, (R3)
 	MOV	#<L14506+2>, R3		; NRGCR+1
 	INCB	(R3)
@@ -5241,9 +5239,9 @@ L14560:	MOV	(R2), R0		; <
 	MOVB	#001, K33540		; set DEAD = 1
 	CLRB	<L14472+2>		; clear (DECEN+1)
 	RETURN
-	NOP3
-	NOP3
-	NOP3
+;
+	.BLKW	9.	;NOTE: Free space
+;
 ; NRGC1:
 L14664:	POP	R5
 	POP	R1
@@ -5303,9 +5301,8 @@ L14762:	CALL	L15506			; PLFHN - MONEY up 500.
 	CALL	PRINSP			; PRINT string "THE ART OF NINJITSU"
 	.WORD	050001
 	BR	L15436			; => HAK02
-	NOP3
-	NOP3
-	NOP2
+;
+	.BLKW	8.	;NOTE: Free space
 ;
 L15166:	.ASCII	/YOU HAVE REACHED/
 	.ASCII	/THE ULTIMATE LEVEL/
@@ -5350,11 +5347,8 @@ L15436:	MOV	#K07336, R3		; "PRESS ANY KEY"...
 	CALL	L13024			; KPASE
 	CALL	L13100			; PAWS0
 	JMP	L10606			; => FNISH - Finish the game
-	NOP3
-	NOP2
-	NOP3
-	NOP3
-	NOP3
+;
+	.BLKW	14.	;NOTE: Free space
 ;
 L15530:	.ASCII	/CONGRATULATIONS/
 L15547:	.ASCII	/YOU HAVE COMPLETED/
@@ -5385,9 +5379,8 @@ L15722:	DECB	K01604
 	MOV	R0, @#177716
 	SOB	R1, L15674		; repeat
 	RETURN
-	NOP3
-	NOP3
-	NOP2
+;
+	.BLKW	8.	;NOTE: Free space
 ;
 L15756:
 	.BYTE	070,001,010, 062,002,004, 064,010,002
@@ -5400,9 +5393,6 @@ L15775:
 ; Computerized font, 59 chars 8x8
 ;L16014: 				; CHARSET
 .INCLUDE /S2FNT2.MAC/
-;
-; Table for multiplication by 20.
-TMUL20:	.BLKW	256.
 ;
 ;TODO: Поместить в буферную память, используется один раз на старте
 PREPAR:
@@ -5449,7 +5439,12 @@ K06706:	RORB	R5			; | <
 ; End of PREPAR
 	RETURN
 ;
+; Table for multiplication by 20.
+TMUL20:	.BLKW	256.
+;
 	.BLKW	679.	;NOTE: Free space
+;
+;------------------------------------------------------------------------------
 ;
 .IIF	NE <.-122624>, ERRORB
 ; Reflection table, but starting from 128., 256. bytes; see K06660
